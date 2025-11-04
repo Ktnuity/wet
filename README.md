@@ -22,6 +22,11 @@ When a task downloads to a file, it would need an absolute file in relation to y
 - Arithmetics: `+`, `-`, `/`, `*`, `%`, `++`, `--`
 - Bitwise: `&`, `|`, `^`, `~`
 - Logical: `==`, `!=`, `<`, `<=`, `>`, `>=`, `!`
+- Boolean: `&&`, `||`
+
+## Output
+- Strings: `puts`
+- Numbers: `.`
 
 ## Conditionals & Branching
 The following branches and conditionals would exist:

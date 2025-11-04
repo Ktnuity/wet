@@ -35,43 +35,6 @@ func TokenizeCode(input string) ([]types.Token) {
 	return result
 }
 
-var escapePathMap = map[rune]bool{
-	'\\': true, ' ': true,
-}
-func escapePath(path string) string {
-	var sb strings.Builder
-	sb.Grow(len(path))
-
-	for _, ch := range path {
-		if escapePathMap[ch] {
-			sb.WriteRune('\\')
-		}
-
-		sb.WriteRune(ch)
-	}
-
-	return sb.String()
-}
-
-func getTokenFormat(token *types.Token) string {
-	if token == nil {
-		return "<nil>"
-	}
-
-	typeName := types.GetTokenTypeName(token.Type)
-
-	switch token.Type {
-	case types.TokenTypeNumber, types.TokenTypeKeyword, types.TokenTypeSymbol:
-		return fmt.Sprintf("%s(%s)", typeName, token.Value)
-	case types.TokenTypePath:
-		return escapePath(token.Value)
-	case types.TokenTypeNone:
-		return fmt.Sprintf("%s[[%s]]", typeName, token.Value)
-	default:
-		return fmt.Sprintf("%s", token.Value)
-	}
-}
-
 func LogTokens(tokens []types.Token) error {
 	if len(tokens) == 0 {
 		return fmt.Errorf("failed to log tokens. no tokens present")
@@ -80,7 +43,7 @@ func LogTokens(tokens []types.Token) error {
 	fmt.Printf("Token Count: %d\n", len(tokens))
 
 	for idx, token := range tokens {
-		format := getTokenFormat(&token)
+		format := token.Format()
 		fmt.Printf("%d : %s\n", idx, format)
 	}
 

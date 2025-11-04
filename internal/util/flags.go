@@ -23,3 +23,15 @@ func HasAnyFlags(flags uint8, test...uint8) bool {
 
 	return false
 }
+
+func HasBitFlag(flags, flag uint8) bool {
+	return (flags & flag) == flag
+}
+
+func HasAnyBitFlags(flags, test uint8) bool {
+	return (flags & test) != 0
+}
+
+func HasAllBitFlags(flags, test uint8) bool {
+	return (flags & test) == test
+}
