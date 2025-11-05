@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a bug.
+title: '[Bug]: '
+labels:
+  - bug
+body:
+  - type: input
+    id: '1'
+    attributes:
+      label: Short description of issue faced?
+      description: Keep description within one or two sentences.
+    validations:
+      required: true
+  - type: dropdown
+    id: '2'
+    attributes:
+      label: What platform are you on?
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: '3'
+    attributes:
+      label: Enter your platform
+      description: '**Required if you selected "Other" above.** Otherwise leave blank.'
+      placeholder: e.g., FreeBSD, Android, etc.
+  - type: textarea
+    id: '4'
+    attributes:
+      label: Fastfetch paste (Linux only)
+      description: >-
+        **Required if you selected "Linux" above.** Otherwise leave blank.
+
+        On your Linux install, get the program `fastfetch`, run:
+        `fastfetch --logo none`. Copy its content into this box.
+  - type: textarea
+    id: '5'
+    attributes:
+      label: Expected Behaviour
+      description: A clear and concise description of what you expected to happen.
+  - type: textarea
+    id: '6'
+    attributes:
+      label: Actual Behaviour
+      description: A clear description of what actually happens.
+    validations:
+      required: true
+  - type: textarea
+    id: '7'
+    attributes:
+      label: Notes
+      description: If applicable, write any extra notes for context.
+  - type: textarea
+    id: '8'
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.

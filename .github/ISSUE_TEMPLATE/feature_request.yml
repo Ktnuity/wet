@@ -1,0 +1,29 @@
+name: Feature Request
+description: Suggest an idea for wet.
+title: '[Feature Request]: '
+labels:
+  - enhancement
+body:
+  - type: input
+    id: '1'
+    attributes:
+      label: Short description of feature idea?
+      description: Teh description should be one or two sentences at most.
+    validations:
+      required: true
+  - type: textarea
+    id: '2'
+    attributes:
+      label: Problem Description
+      description: >-
+        Please add a clear and concise description of the problem you are
+        seeking to solve with this feature request.
+    validations:
+      required: true
+  - type: textarea
+    id: '3'
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd line in a clear and concise manner.
+    validations:
+      required: true
