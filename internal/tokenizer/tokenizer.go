@@ -64,7 +64,55 @@ func stripComments(str string) string {
 }
 
 func stripExcessWhitespace(str string) string {
-	return strings.Join(strings.Fields(str), " ")
+	var result strings.Builder
+	result.Grow(len(str))
+
+	inString := false
+	escaped := false
+	prevWasSpace := false
+
+	for _, ch := range str {
+		if escaped {
+			result.WriteRune(ch)
+			escaped = false
+			prevWasSpace = false
+			continue
+		}
+
+		if ch == '\\' && inString {
+			escaped = true
+			result.WriteRune(ch)
+			prevWasSpace = false
+			continue
+		}
+
+		if ch == '"' {
+			inString = !inString
+			result.WriteRune(ch)
+			prevWasSpace = false
+			continue
+		}
+
+		if inString {
+			result.WriteRune(ch)
+			prevWasSpace = false
+			continue
+		}
+
+		// Outside string: collapse whitespace
+		isSpace := ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
+		if isSpace {
+			if !prevWasSpace {
+				result.WriteRune(' ')
+				prevWasSpace = true
+			}
+		} else {
+			result.WriteRune(ch)
+			prevWasSpace = false
+		}
+	}
+
+	return strings.TrimSpace(result.String())
 }
 
 func nextWord(str string) (*string, string) {
@@ -74,11 +122,23 @@ func nextWord(str string) (*string, string) {
 	}
 
 	if str[0] == '"' {
-		end := strings.Index(str[1:], "\"")
-		if end == -1 {
-			return &str, ""
+		escaped := false
+		for i := 1; i < len(str); i++ {
+			if escaped {
+				escaped = false
+				continue
+			}
+			if str[i] == '\\' {
+				escaped = true
+				continue
+			}
+			if str[i] == '"' {
+				// Found the closing quote
+				return util.AsRef(strings.TrimSpace(str[i+1:])), str[:i+1]
+			}
 		}
-		return util.AsRef(strings.TrimSpace(str[end+2:])), str[:end+2]
+		// No closing quote found - return entire string as error token
+		return util.AsRef(""), str
 	}
 
 	parts := strings.Fields(str)
@@ -106,6 +166,8 @@ var keywords = map[string]bool{
 	"unzip": true, "lsf": true, "getf": true, "lsd": true, "getd": true,
 	"concat": true, "tostring": true, "token": true, "absolute": true, "relative": true,
 	"true": true, "false": true,
+	"puts": true,
+	"int": true, "string": true,
 }
 
 func isKeyword(str string) bool {
@@ -123,7 +185,8 @@ func isPath(str string) bool {
 var symbols = map[string]bool{
 	"+": true, "-": true, "/": true, "*": true, "%": true, "++": true, "--": true,
 	"&": true, "|": true, "^": true, "~": true,
-	"==": true, "!=": true, "<": true, "<=": true, ">": true, ">=": true, "!": true,
+	"&&": true, "||": true,
+	"=": true, "!=": true, "<": true, "<=": true, ">": true, ">=": true, "!": true,
 	".": true,
 }
 

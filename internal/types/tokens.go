@@ -119,3 +119,60 @@ func (t *Token) GetNumberValue() (int, bool) {
 
 	return 0, false
 }
+
+func (t *Token) GetStringValue() (string, bool) {
+	if t == nil {
+		return "", false
+	}
+
+	if !t.Equals("", TokenTypeString) {
+		return "", false
+	}
+
+	if t.Value == "" {
+		return "", false
+	}
+
+	return UnescapeString(t.Value), true
+}
+
+func UnescapeString(str string) string {
+	if len(str) < 2 || str[0] != '"' || str[len(str)-1] != '"' {
+		return str
+	}
+
+	// Remove quotes
+	content := str[1 : len(str)-1]
+
+	var result strings.Builder
+	result.Grow(len(content))
+
+	escaped := false
+	for _, ch := range content {
+		if escaped {
+			switch ch {
+			case 'n':
+				result.WriteRune('\n')
+			case 't':
+				result.WriteRune('\t')
+			case 'r':
+				result.WriteRune('\r')
+			case '\\':
+				result.WriteRune('\\')
+			case '"':
+				result.WriteRune('"')
+			default:
+				// Unknown escape sequence, keep as-is
+				result.WriteRune('\\')
+				result.WriteRune(ch)
+			}
+			escaped = false
+		} else if ch == '\\' {
+			escaped = true
+		} else {
+			result.WriteRune(ch)
+		}
+	}
+
+	return result.String()
+}

@@ -1,0 +1,12 @@
+"Test 1\n" puts
+0 1 while dup 1000 < do
+    dup 3 % 0 =
+    over 5 % 0 =
+    || if
+        swap over + swap
+    end
+    1 +
+end
+drop
+"Result: " swap + "\n" + puts
+"Match:  " 233168 + "\n" + puts

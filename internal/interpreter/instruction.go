@@ -56,6 +56,21 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 			other.Next = idx + 1
 
 			ipStack.Push(idx + 1)
+		} else if instruction.Token.Equals("while", types.TokenTypeKeyword) {
+			ipStack.Push(idx)
+		} else if instruction.Token.Equals("do", types.TokenTypeKeyword) {
+			ip, ok := ipStack.Pop()
+			if !ok {
+				return nil, fmt.Errorf("failed to process instruction. do reached without ip-stack at index %d", idx)
+			}
+
+			other := &instructions[ip]
+			if !other.Token.Equals("while", types.TokenTypeKeyword) {
+				return nil, fmt.Errorf("failed to process instruction. do reached without while at index %d", idx)
+			}
+
+			ipStack.Push(idx);
+			instruction.Next = ip
 		} else if instruction.Token.Equals("end", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
 			if !ok {
@@ -63,11 +78,17 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 			}
 
 			other := &instructions[ip]
-			if !other.Token.Equals("if", types.TokenTypeKeyword) && !other.Token.Equals("else", types.TokenTypeKeyword) {
+			if other.Token.Equals("if", types.TokenTypeKeyword) {
+				other.Next = idx + 1
+			} else if other.Token.Equals("else", types.TokenTypeKeyword) {
+				other.Next = idx + 1
+			} else if other.Token.Equals("do", types.TokenTypeKeyword) {
+				doIp := other.Next
+				other.Next = idx + 1
+				instruction.Next = doIp
+			} else {
 				return nil, fmt.Errorf("failed to process instruction. end reached without if or else at index %d", idx)
 			}
-
-			other.Next = idx + 1
 		}
 	}
 

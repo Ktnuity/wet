@@ -21,7 +21,7 @@ When a task downloads to a file, it would need an absolute file in relation to y
 `wet` would support arithmetics similar to that of `porth`. The way this would work is by utilizing [Reverse Polish Notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation). So instead of `x + y` as we humans normally do it, we'd use `x y +`. `wet` would support all of these:
 - Arithmetics: `+`, `-`, `/`, `*`, `%`, `++`, `--`
 - Bitwise: `&`, `|`, `^`, `~`
-- Logical: `==`, `!=`, `<`, `<=`, `>`, `>=`, `!`
+- Logical: `=`, `!=`, `<`, `<=`, `>`, `>=`, `!`
 - Boolean: `&&`, `||`
 
 ## Output
