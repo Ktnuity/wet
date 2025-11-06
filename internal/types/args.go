@@ -6,6 +6,8 @@ const (
 	WetFlagVerboseRuntime uint8 = 0x2
 	WetFlagVerboseCompile uint8 = 0x4
 	WetFlagVerbose uint8 = 0x7
+	WetFlagHelp uint8 = 0x8
+	WetFlagDev uint8 = 0x10
 )
 
 type WetBin struct {

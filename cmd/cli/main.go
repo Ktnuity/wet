@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/ktnuity/wet/internal/app"
@@ -22,21 +25,26 @@ func main() {
 		return
 	}
 
-	if args.Path == nil {
-		fmt.Printf("Usage: %s [options] <file>\n", args.Bin.Name)
-		return
-	}
+	var source string
+	if args.Flags & types.WetFlagHelp == types.WetFlagHelp {
+		source, err = processSource("@include std.wet\nhelp\n", 4, args)
+		ExitWithError(err, util.AsRef("Failed to load help file"))
+	} else {
+		if args.Path == nil {
+			fmt.Printf("Usage: %s [options] <file>\n", args.Bin.Name)
+			return
+		}
 
-	sourcePath := *args.Path
+		sourcePath := *args.Path
 
+		source, err = loadSource(sourcePath, 4, args)
+		ExitWithError(err, util.AsRef(fmt.Sprintf("Failed to load file: %s", *args.Path)))
 
-	source, err := loadFile(sourcePath)
-	ExitWithError(err, util.AsRef(fmt.Sprintf("Failed to load file: %s", *args.Path)))
-
-	dir := sourcePath[:strings.LastIndex(strings.ReplaceAll(sourcePath, "\\", "/"), "/")]
-	if dir != "" {
-		err = os.Chdir(dir)
-		ExitWithError(err, util.AsRef("Failed to change directory"))
+		dir := sourcePath[:strings.LastIndex(strings.ReplaceAll(sourcePath, "\\", "/"), "/")]
+		if dir != "" {
+			err = os.Chdir(dir)
+			ExitWithError(err, util.AsRef("Failed to change directory"))
+		}
 	}
 
 	err = app.EntryPoint(source, args)
@@ -59,6 +67,87 @@ func loadFile(path string) (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+func loadSource(path string, maxDepth int, args *types.WetArgs) (string, error) {
+	file, err := loadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to load source. loadFile failed: %v", err)
+	}
+
+	file = "@include std.wet\n" + file
+
+	return processSource(file, maxDepth, args)
+}
+
+func processSource(file string, maxDepth int, args *types.WetArgs) (string, error) {
+	if maxDepth <= 0 {
+		return "", fmt.Errorf("failed to load source. max depth reached.")
+	}
+
+	lines := strings.Split(file, "\n")
+	result := make([]string, 0, len(lines))
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "@include ") {
+			fileName := line[9:]
+
+			recSource, err := includeSource(fileName, args)
+			if err != nil {
+				return "", fmt.Errorf("failed to load source: %v", err)
+			}
+
+			procSource, err := processSource(recSource, maxDepth - 1, args)
+			if err != nil {
+				return "", fmt.Errorf("failed to process source: %v", err)
+			}
+
+			result = append(result, procSource)
+		} else {
+			result = append(result, line)
+		}
+	}
+
+	return strings.Join(result, "\n"), nil
+}
+
+func includeSource(fileName string, args *types.WetArgs) (string, error) {
+	var err error
+	var recSource string
+	if _, statErr := os.Stat(fileName); statErr == nil && fileName != "std.wet" {
+		recSource, err = loadFile(fileName)
+	} else if matched, _ := regexp.MatchString(`^[a-z]+\.wet$`, fileName); matched {
+		stdPath := "./std/" + fileName
+		if _, statErr := os.Stat(stdPath); statErr == nil && args.Flags & types.WetFlagDev == types.WetFlagDev {
+			recSource, err = loadFile(stdPath)
+		} else {
+			url := "https://raw.githubusercontent.com/Ktnuity/wet/refs/heads/master/std/" + fileName
+			resp, httpErr := http.Get(url)
+			if httpErr != nil {
+				err = fmt.Errorf("failed to download from %s: %v", url, httpErr)
+			} else {
+				defer resp.Body.Close()
+				if resp.StatusCode == http.StatusOK {
+					body, readErr := io.ReadAll(resp.Body)
+					if readErr != nil {
+						err = fmt.Errorf("failed to read response from %s: %v", url, readErr)
+					} else {
+						recSource = string(body)
+					}
+				} else {
+					err = fmt.Errorf("failed to download from %s: status %d", url, resp.StatusCode)
+				}
+			}
+		}
+	} else {
+		return "", fmt.Errorf("failed to load source. include directive '%s' yielded invalid result.", fileName)
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("failed to load source: %v", err)
+	}
+
+	return recSource, nil
 }
 
 func getCommandArguments() (*types.WetArgs, error) {
@@ -84,6 +173,10 @@ func getCommandArguments() (*types.WetArgs, error) {
 				args.Flags |= types.WetFlagVerboseTokenize
 			case "--verbose":
 				args.Flags |= types.WetFlagVerbose
+			case "--help":
+				args.Flags |= types.WetFlagHelp
+			case "--dev":
+				args.Flags |= types.WetFlagDev
 			}
 		} else if args.Path == nil {
 			args.Path = util.AsRef(argv[argi])

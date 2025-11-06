@@ -1,9 +1,10 @@
+"Test 0\n" puts
 1 if
     1
 else
     0
 end
-.
+1 test=
 
 "Test 1\n" puts
 0 1 while dup 1000 < do
@@ -15,8 +16,7 @@ end
     1 +
 end
 drop
-"Result: " swap + "\n" + puts
-"Match:  " 233168 + "\n" + puts
+233168 test=
 
 "Test 2\n" puts
 0 "value" store
@@ -28,8 +28,7 @@ drop
     swap over +
 end
 drop drop
-"Result: " "value" load + "\n" + puts
-"Match:  " 4613732 + "\n" + puts
+"value" load 4613732 test=
 
 "Test 3\n" puts
 0 "value" store
@@ -40,12 +39,11 @@ drop drop
         over "value" store
         swap over /
         dup 1 = if
-            "value" load .
             drop 0
         end
         swap
     end
 end
 drop drop
-"Result: " "value" load + "\n" + puts
-"Match: " 6857 + "\n" + puts
+"value" load 6857 test=
+
