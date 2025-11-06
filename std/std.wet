@@ -32,5 +32,7 @@ macro help
 
     "For more info, see: https://github.com/Ktnuity/wet\n\n" puts
 
-    "Released under MIT License.\n" puts
+    "Released under MIT License: https://github.com/Ktnuity/wet/blob/master/LICENSE\n\n" puts
+
+    "Copyright (c) 2025 Kirdow\n" puts
 end
