@@ -14,6 +14,7 @@ type StackValue = util.Either[string, int]
 type Interpreter struct {
 	stack		util.Stack[StackValue]
 	program		[]Instruction
+	memory		map[string]StackValue
 	ip			int
 	eop			int
 }
@@ -29,6 +30,7 @@ func CreateNew(tokens []types.Token) (*Interpreter, error) {
 	return &Interpreter{
 		stack: stack,
 		program: program,
+		memory: make(map[string]StackValue),
 		ip: 0,
 		eop: int(len(program)),
 	}, nil
@@ -108,7 +110,10 @@ func (ip *Interpreter) Step() (bool, error) {
 		}
 
 		ip.runtimev("pushing %d\n", num)
-		ip.ipush(num)
+		err := ip.ipush(num)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. number push operator failed. failure pushing value: %v", err)
+		}
 	} else if token.Equals("", types.TokenTypeString) {
 		str, ok := token.GetStringValue()
 		if !ok {
@@ -116,7 +121,10 @@ func (ip *Interpreter) Step() (bool, error) {
 		}
 
 		ip.runtimev("pushing \"%s\"\n", strings.ReplaceAll(str, "\n", "\\n"))
-		ip.spush(str)
+		err := ip.spush(str)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. string push operator failed. failure pushing value: %v", err)
+		}
 	} else if token.Equals(".", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 1 {
 			return ip.runtimeverr("failed to run step. log operator failed. stack is empty.\n")
@@ -173,14 +181,26 @@ func (ip *Interpreter) Step() (bool, error) {
 		parsed, err := strconv.Atoi(s1)
 		if err != nil {
 			ip.runtimev("parse failed, pushing 0\n")
-			ip.ipush(0)
+			err := ip.ipush(0)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. int operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed %d\n", 0)
-			ip.ipush(0)
+			err = ip.ipush(0)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. int operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed %d (false)\n", 0)
 		} else {
-			ip.ipush(parsed)
+			err := ip.ipush(parsed)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. int operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed %d\n", parsed)
-			ip.ipush(1)
+			err = ip.ipush(1)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. int operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed %d (true)\n", 1)
 		}
 	} else if token.Equals("string", types.TokenTypeKeyword) {
@@ -196,13 +216,71 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		if s1, ok := v1.Left(); ok {
 			ip.runtimev("popped \"%s\"\n", s1)
-			ip.spush(s1)
+			err := ip.spush(s1)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. string operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed \"%s\"\n", s1)
 		} else if n1, ok := v1.Right(); ok {
 			ip.runtimev("popped %d\n", n1)
 			result := strconv.Itoa(n1)
-			ip.spush(result)
+			err := ip.spush(result)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. string operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed \"%s\"\n", result)
+		}
+	} else if token.Equals("store", types.TokenTypeKeyword) {
+		if ip.stack.Len() < 2 {
+			return ip.runtimeverr("failed to run step. store operator failed. stack is empty.\n")
+		}
+
+		ip.runtimev("storing value in memory.\n")
+		vName, err := ip.pop()
+		if err != nil {
+			return ip.runtimeverr("failed to run step. store operator failed. failed to get name: %v\n", err)
+		}
+
+		name, ok := vName.Left()
+		if !ok {
+			return ip.runtimeverr("failed to run step. store operator failed. failed to get name value.\n")
+		}
+
+		vValue, err := ip.pop()
+		if err != nil {
+			return ip.runtimeverr("failed to run step. store operator failed. failed to get value: %v\n", err)
+		}
+
+		ip.store(name, vValue)
+	} else if token.Equals("load", types.TokenTypeKeyword) {
+		if ip.stack.Len() < 1 {
+			return ip.runtimeverr("failed to run step. load operator failed. stack is empty.\n")
+		}
+
+		ip.runtimev("loading value from memory.\n")
+		vName, err := ip.pop()
+		if err != nil {
+			return ip.runtimeverr("failed to run step. load operator failed. failed to get name: %v\n", err)
+		}
+
+		name, ok := vName.Left()
+		if !ok {
+			return ip.runtimeverr("failed to run step. load operator failed. failed to get name value.\n")
+		}
+
+		value, err := ip.load(name)
+		if err != nil {
+			return ip.runtimeverr("failed to run step. load operator failed. failed to load memory: %v\n", err)
+		}
+
+		ip.push(value)
+
+		left, okLeft := value.Left()
+		right, okRight := value.Right()
+		if okLeft {
+			ip.runtimev("pushed \"%s\"\n", left)
+		} else if okRight {
+			ip.runtimev("pushed %d\n", right)
 		}
 	} else if token.Equals("+", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -227,7 +305,10 @@ func (ip *Interpreter) Step() (bool, error) {
 
 				result := s2 + s1
 
-				ip.spush(result)
+				err := ip.spush(result)
+				if err != nil {
+					return false, fmt.Errorf("failed to run step. + operator failed. failure pushing value: %v", err)
+				}
 				ip.runtimev("pushed \"%s\"\n", result)
 			} else if n1, ok := v1.Right(); ok {
 				ip.runtimev("popped %d\n", n1)
@@ -235,7 +316,10 @@ func (ip *Interpreter) Step() (bool, error) {
 
 				result := fmt.Sprintf("%s%d", s2, n1)
 
-				ip.spush(result)
+				err := ip.spush(result)
+				if err != nil {
+					return false, fmt.Errorf("failed to run step. + operator failed. failure pushing value: %v", err)
+				}
 				ip.runtimev("pushed \"%s\"\n", result)
 			} else {
 				return ip.runtimeverr("failed to run step. + operator failed. failed to get first value type.\n")
@@ -247,7 +331,10 @@ func (ip *Interpreter) Step() (bool, error) {
 
 				result := n2 + n1
 
-				ip.ipush(result)
+				err := ip.ipush(result)
+				if err != nil {
+					return false, fmt.Errorf("failed to run step. + operator failed. failure pushing value: %v", err)
+				}
 				ip.runtimev("pushed %d\n", result)
 			} else if v1.IsLeft() {
 				return ip.runtimeverr("failed to run step. + operator failed. second value is int, thus first value must be int.\n")
@@ -295,7 +382,10 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		result := n2 - n1
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. - operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("*", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -335,7 +425,10 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		result := n1 * n2
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. * operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("/", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -378,7 +471,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			result = n2 / n1
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. / operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("%", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -421,7 +517,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			result = n2 % n1
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. % operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("dup", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
@@ -436,15 +535,27 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		if s1, ok := v1.Left(); ok {
 			ip.runtimev("popped \"%s\"\n", s1)
-			ip.spush(s1)
+			err := ip.spush(s1)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. dup operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed \"%s\"\n", s1)
-			ip.spush(s1)
+			err = ip.spush(s1)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. dup operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed \"%s\"\n", s1)
 		} else if n1, ok := v1.Right(); ok {
 			ip.runtimev("popped %d\n", n1)
-			ip.ipush(n1)
+			err := ip.ipush(n1)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. dup operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed %d\n", n1)
-			ip.ipush(n1)
+			err = ip.ipush(n1)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. dup operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed %d\n", n1)
 		}
 	} else if token.Equals("drop", types.TokenTypeKeyword) {
@@ -491,14 +602,20 @@ func (ip *Interpreter) Step() (bool, error) {
 			ip.runtimev("popped %d\n", n2)
 		}
 
-		ip.push(v1)
+		err = ip.push(v1)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. swap operator failed. failure pushing value: %v", err)
+		}
 		if s1, ok := v1.Left(); ok {
 			ip.runtimev("pushed \"%s\"\n", s1)
 		} else if n1, ok := v1.Right(); ok {
 			ip.runtimev("pushed %d\n", n1)
 		}
 
-		ip.push(v2)
+		err = ip.push(v2)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. swap operator failed. failure pushing value: %v", err)
+		}
 		if s2, ok := v2.Left(); ok {
 			ip.runtimev("pushed \"%s\"\n", s2)
 		} else if n2, ok := v2.Right(); ok {
@@ -517,11 +634,17 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		if s2, ok := v2.Left(); ok {
 			ip.runtimev("peeked(1) \"%s\"\n", s2)
-			ip.spush(s2)
+			err := ip.spush(s2)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. over operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed \"%s\"\n", s2)
 		} else if n2, ok := v2.Right(); ok {
 			ip.runtimev("peeked(1) %d\n", n2)
-			ip.ipush(n2)
+			err := ip.ipush(n2)
+			if err != nil {
+				return false, fmt.Errorf("failed to run step. over operator failed. failure pushing value: %v", err)
+			}
 			ip.runtimev("pushed %d\n", n2)
 		}
 	} else if token.Equals("2dup", types.TokenTypeKeyword) {
@@ -552,14 +675,20 @@ func (ip *Interpreter) Step() (bool, error) {
 			ip.runtimev("peeked(0) %d\n", n2)
 		}
 
-		ip.push(v1)
+		err = ip.push(v1)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. 2dup operator failed. failure pushing value: %v", err)
+		}
 		if s1, ok := v1.Left(); ok {
 			ip.runtimev("pushed \"%s\"\n", s1)
 		} else if n1, ok := v1.Right(); ok {
 			ip.runtimev("pushed %d\n", n1)
 		}
 
-		ip.push(v2)
+		err = ip.push(v2)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. 2dup operator failed. failure pushing value: %v", err)
+		}
 		if s2, ok := v2.Left(); ok {
 			ip.runtimev("pushed \"%s\"\n", s2)
 		} else if n2, ok := v2.Right(); ok {
@@ -615,28 +744,40 @@ func (ip *Interpreter) Step() (bool, error) {
 			ip.runtimev("popped %d\n", n4)
 		}
 
-		ip.push(v2)
+		err = ip.push(v2)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. 2swap operator failed. failure pushing value: %v", err)
+		}
 		if s2, ok := v2.Left(); ok {
 			ip.runtimev("pushed \"%s\"\n", s2)
 		} else if n2, ok := v2.Right(); ok {
 			ip.runtimev("pushed %d\n", n2)
 		}
 
-		ip.push(v1)
+		err = ip.push(v1)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. 2swap operator failed. failure pushing value: %v", err)
+		}
 		if s1, ok := v1.Left(); ok {
 			ip.runtimev("pushed \"%s\"\n", s1)
 		} else if n1, ok := v1.Right(); ok {
 			ip.runtimev("pushed %d\n", n1)
 		}
 
-		ip.push(v4)
+		err = ip.push(v4)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. 2swap operator failed. failure pushing value: %v", err)
+		}
 		if s4, ok := v4.Left(); ok {
 			ip.runtimev("pushed \"%s\"\n", s4)
 		} else if n4, ok := v4.Right(); ok {
 			ip.runtimev("pushed %d\n", n4)
 		}
 
-		ip.push(v3)
+		err = ip.push(v3)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. 2swap operator failed. failure pushing value: %v", err)
+		}
 		if s3, ok := v3.Left(); ok {
 			ip.runtimev("pushed \"%s\"\n", s3)
 		} else if n3, ok := v3.Right(); ok {
@@ -747,7 +888,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			}
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. = operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %s\n", name)
 	} else if token.Equals("!=", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -794,7 +938,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			}
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. != operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %s\n", name)
 	} else if token.Equals("<", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -839,7 +986,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			}
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. < operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %s\n", name)
 	} else if token.Equals(">", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -884,7 +1034,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			}
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. > operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %s\n", name)
 	} else if token.Equals("<=", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -929,7 +1082,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			}
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. <= operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %s\n", name)
 	} else if token.Equals(">=", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -974,7 +1130,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			}
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. >= operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %s\n", name)
 	} else if token.Equals("!", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 1 {
@@ -1003,7 +1162,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			name = "true"
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. ! operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %s\n", name)
 	} else if token.Equals("~", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 1 {
@@ -1028,7 +1190,10 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		result := ^n1
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. ~ operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("&", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -1068,7 +1233,10 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		result := n2 & n1
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. & operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("|", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -1108,7 +1276,10 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		result := n2 | n1
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. | operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("^", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -1148,7 +1319,10 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		result := n2 ^ n1
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. ^ operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("&&", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -1192,7 +1366,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			name = "true"
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. && operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %s\n", name)
 	} else if token.Equals("||", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
@@ -1236,7 +1413,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			name = "true"
 		}
 
-		ip.ipush(result)
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. || operator failed. failure pushing value: %v", err)
+		}
 		ip.runtimev("pushed %s\n", name)
 	} else {
 		if IsVerboseRuntime() {
@@ -1250,6 +1430,51 @@ func (ip *Interpreter) Step() (bool, error) {
 	ip.ip++
 
 	return true, nil
+}
+
+func (ip *Interpreter) load(name string) (StackValue, error) {
+	var value StackValue
+	value, ok := ip.memory[name]
+	if !ok {
+		return value, fmt.Errorf("failed to load(%s). value not found.", name)
+	}
+
+	left, ok := value.Left()
+	if ok {
+		ip.runtimev("loaded \"%s\"\n", left)
+		return value, nil
+	}
+
+	right, ok := value.Right()
+	if ok {
+		ip.runtimev("loaded %d\n", right)
+		return value, nil
+	}
+
+	return value, fmt.Errorf("failed to load(%s). value found, but unknown type.", name)
+}
+
+func (ip *Interpreter) store(name string, value StackValue) error {
+	left, okLeft := value.Left()
+	right, okRight := value.Right()
+	if okLeft {
+		ip.runtimev("stored \"%s\"\n", left)
+	} else if okRight {
+		ip.runtimev("stored %d\n", right)
+	} else {
+		return fmt.Errorf("failed to store(%s). value given, but unknown type.", name)
+	}
+
+	ip.memory[name] = value
+	return nil
+}
+
+func (ip *Interpreter) sstore(name string, value string) error {
+	return ip.store(name, util.NewLeft[string, int](value))
+}
+
+func (ip *Interpreter) istore(name string, value int) error {
+	return ip.store(name, util.NewRight[string, int](value))
 }
 
 func (ip *Interpreter) pop() (StackValue, error) {
@@ -1281,16 +1506,22 @@ func (ip *Interpreter) peekOffset(offset int) (StackValue, error) {
 	return ip.stack[ip.stack.Len() - 1 - offset], nil
 }
 
-func (ip *Interpreter) push(value StackValue) {
+func (ip *Interpreter) push(value StackValue) error {
+	if !value.IsEither() {
+		return fmt.Errorf("failed to push stack. value given, but unknown type.")
+	}
+
 	ip.stack.Push(value)
 	ip.runtimev("new stack size %d\n", ip.stack.Len())
+
+	return nil
 }
 
-func (ip *Interpreter) ipush(item int) {
-	ip.push(util.NewRight[string, int](item))
+func (ip *Interpreter) ipush(item int) error {
+	return ip.push(util.NewRight[string, int](item))
 }
 
-func (ip *Interpreter) spush(item string) {
-	ip.push(util.NewLeft[string, int](item))
+func (ip *Interpreter) spush(item string) error {
+	return ip.push(util.NewLeft[string, int](item))
 }
 

@@ -15,6 +15,7 @@ func NewRight[L, R any](val R) Either[L, R] {
 
 func (e Either[L, R]) IsLeft() bool { return e.left != nil }
 func (e Either[L, R]) IsRight() bool { return e.right != nil }
+func (e Either[L, R]) IsEither() bool { return e.left != nil || e.right != nil }
 
 func (e Either[L, R]) UnpackLeft() L { return *e.left }
 func (e Either[L, R]) UnpackRight() R { return *e.right }

@@ -1,3 +1,10 @@
+1 if
+    1
+else
+    0
+end
+.
+
 "Test 1\n" puts
 0 1 while dup 1000 < do
     dup 3 % 0 =
@@ -10,3 +17,35 @@ end
 drop
 "Result: " swap + "\n" + puts
 "Match:  " 233168 + "\n" + puts
+
+"Test 2\n" puts
+0 "value" store
+1 2 while dup 4000000 < do
+    dup 2 % 0 = if
+        dup "value" load + "value" store
+    end
+
+    swap over +
+end
+drop drop
+"Result: " "value" load + "\n" + puts
+"Match:  " 4613732 + "\n" + puts
+
+"Test 3\n" puts
+0 "value" store
+600851475143 2 while over 0 != do
+    2dup % 0 != if
+        1 +
+    else
+        over "value" store
+        swap over /
+        dup 1 = if
+            "value" load .
+            drop 0
+        end
+        swap
+    end
+end
+drop drop
+"Result: " "value" load + "\n" + puts
+"Match: " 6857 + "\n" + puts

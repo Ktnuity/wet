@@ -55,7 +55,7 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 
 			other.Next = idx + 1
 
-			ipStack.Push(idx + 1)
+			ipStack.Push(idx)
 		} else if instruction.Token.Equals("while", types.TokenTypeKeyword) {
 			ipStack.Push(idx)
 		} else if instruction.Token.Equals("do", types.TokenTypeKeyword) {
