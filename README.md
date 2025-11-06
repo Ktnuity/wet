@@ -12,10 +12,10 @@ Wet is a collection of tasks you'd usually see run in a project to initialize to
 It's sort of there in the name. `wet` is the liquid as it's poured from the kettle into every cup of the dozens of people visiting you. You shouldn't need to do it yourself, `wet` is the servant you've hired to do it for you, and it does exactly as you've told it to.
 
 # Features?
-Since this is a clean slate project, nothing has been done so far. But I'm planning to have this complete feature set and more once the project is finished.
+This project is WIP so what follows below is mostly a plan for what will become. And more will of course follow once it's completed.
 
-## Tokens vs Files
-When a task downloads to a file, it would need an absolute file in relation to your `.git` directory location. However, in order to allow for temporary paths, you will be able to use tokens. To create a token file, you write `:<token>` instead of `<file>`. The prefix of `:` indicates a token being used. On the back-end, this would use a `~/.wet/` for storage, or `./.wet` if manually created next to `./.git`.
+<details>
+    <summary><code>Language</code>: Information about the language that powers **wet**</summary>
 
 ## Arithmetics
 `wet` would support arithmetics similar to that of `porth`. The way this would work is by utilizing [Reverse Polish Notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation). So instead of `x + y` as we humans normally do it, we'd use `x y +`. `wet` would support all of these:
@@ -80,15 +80,21 @@ Resource Locations would use `\ ` to excape a space, and `\\` to escape a backsl
     ```
 
 ## Memory
-- `<value> @<name> store`: store `<value>` as `@<name>`.
-  - consumes `<value>` and `@<name>`.
-  - `@<name>` is a constant non-data-type value.
-- `@<name> load`: load from `@<name>`.
-  - consumes `@<name>`
-  - `@<name>` is a constant non-data-type value.
+- `<value> "<name>" store`: store `<value>` as `@<name>`.
+  - consumes `<value>` and `"<name>"`.
+- `"<name>" load`: load from `@<name>`.
+  - consumes `"<name>"`
   - pushes `<value> true` if successful and type matches, `false` otherwise.
-- `@<name>` is local-scope by default.
-  - prefix `<name>` with `.` (`@.<name>`) for global scope.
+- `"<name>"` is local-scope by default.
+  - prefix `<name>` with `.` (`".<name>"`) for global scope.
+
+</details>
+
+<details>
+    <summary><code>Tools</code>: Tools and commants that's built into **wet**'s build system</summary>
+
+## Tokens vs Files
+When a task downloads to a file, it would need an absolute file in relation to your `.git` directory location. However, in order to allow for temporary paths, you will be able to use tokens. To create a token file, you write `:<token>` instead of `<file>`. The prefix of `:` indicates a token being used. On the back-end, this would use a `~/.wet/` for storage, or `./.wet` if manually created next to `./.git`.
 
 ## Commands
 - `<url> <dst> download`
@@ -175,6 +181,13 @@ Resource Locations would use `\ ` to excape a space, and `\\` to escape a backsl
     - pushes `./<filepath> true` if successful, `false` otherwise.
 - *more to come...*
 
+</details>
+
+<details>
+    <summary><code>Language Design</code>: Information about language design</summary>
+
+- A lot of this design follows similarities with Porth (See credits below).
+
 ## Branch design
 - `while` & `until`:
   - ```
@@ -212,6 +225,8 @@ Resource Locations would use `\ ` to excape a space, and `\\` to escape a backsl
       - runs `<body-0>` if `<condition-0>` returns `false`.
       - runs `<body-1>` if `<condition-1>` returns `false`, `<body-2>` otherwise.
 
+</details>
+
 # Credits
 Inspired by these projects:
 - [`markut`](https://github.com/tsoding/markut) by [Tsoding/Rexim](https://github.com/tsoding).
@@ -221,4 +236,4 @@ Inspired by these projects:
 - My extensive use of bash files for development: [ktnlibc/build.sh](https://github.com/Kirdow/ktnlibc/blob/master/build.sh), [cstack/build.sh](https://github.com/Kirdow/cstack/blob/master/build.sh), [pDB/build.sh](https://github.com/Kirdow/pDB/blob/master/run.sh).
 
 # License
-`wet` is released under the [MIT License](https://github.com/Ktnuity/wet/blob/master/LICENSE)
+`wet` is released under the [MIT License](https://github.com/Ktnuity/wet/blob/master/LICENSE).
