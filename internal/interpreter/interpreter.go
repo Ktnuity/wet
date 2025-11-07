@@ -519,7 +519,7 @@ func (ip *Interpreter) Step() (bool, error) {
 
 		err = ip.ipush(result)
 		if err != nil {
-			return false, fmt.Errorf("failed to run step. % operator failed. failure pushing value: %v", err)
+			return false, fmt.Errorf("failed to run step. %% operator failed. failure pushing value: %v", err)
 		}
 		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("dup", types.TokenTypeKeyword) {
