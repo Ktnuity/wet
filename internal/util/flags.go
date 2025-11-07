@@ -1,10 +1,12 @@
 package util
 
-func HasFlag(flags, flag uint8) bool {
+import "github.com/ktnuity/wet/internal/types"
+
+func HasFlag(flags, flag types.WetFlag) bool {
 	return (flags & flag) == flag
 }
 
-func HasAllFlags(flags uint8, test...uint8) bool {
+func HasAllFlags(flags types.WetFlag, test...types.WetFlag) bool {
 	for _, flag := range test {
 		if !HasFlag(flags, flag) {
 			return false
@@ -14,7 +16,7 @@ func HasAllFlags(flags uint8, test...uint8) bool {
 	return true
 }
 
-func HasAnyFlags(flags uint8, test...uint8) bool {
+func HasAnyFlags(flags types.WetFlag, test...types.WetFlag) bool {
 	for _, flag := range test {
 		if HasFlag(flags, flag) {
 			return true
@@ -24,14 +26,14 @@ func HasAnyFlags(flags uint8, test...uint8) bool {
 	return false
 }
 
-func HasBitFlag(flags, flag uint8) bool {
+func HasBitFlag(flags, flag types.WetFlag) bool {
 	return (flags & flag) == flag
 }
 
-func HasAnyBitFlags(flags, test uint8) bool {
+func HasAnyBitFlags(flags, test types.WetFlag) bool {
 	return (flags & test) != 0
 }
 
-func HasAllBitFlags(flags, test uint8) bool {
+func HasAllBitFlags(flags, test types.WetFlag) bool {
 	return (flags & test) == test
 }

@@ -5,9 +5,9 @@ import (
 	"github.com/ktnuity/wet/internal/util"
 )
 
-var argFlags uint8
+var argFlags types.WetFlag
 
-func SubmitFlags(flags uint8) {
+func SubmitFlags(flags types.WetFlag) {
 	argFlags = flags
 }
 

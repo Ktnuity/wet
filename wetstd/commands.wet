@@ -1,0 +1,7 @@
+macro commands
+    "Commands:\n" puts
+
+    "--help, show this menu\n" iputs
+    "--version, show " wet_name + " version\n" + iputs
+    "--license, show " wet_name + " license\n" + iputs
+end

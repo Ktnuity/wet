@@ -1,14 +1,21 @@
 package types
 
+type WetFlag uint8
 const (
-	WetFlagNone uint8 = 0
-	WetFlagVerboseTokenize uint8 = 0x1
-	WetFlagVerboseRuntime uint8 = 0x2
-	WetFlagVerboseCompile uint8 = 0x4
-	WetFlagVerbose uint8 = 0x7
-	WetFlagHelp uint8 = 0x8
-	WetFlagDev uint8 = 0x10
+	WetFlagNone WetFlag = 0
+	WetFlagVerboseTokenize WetFlag = 0x1
+	WetFlagVerboseRuntime WetFlag = 0x2
+	WetFlagVerboseCompile WetFlag = 0x4
+	WetFlagVerbose WetFlag = 0x7
+	WetFlagDev WetFlag = 0x8
+	WetFlagHelp WetFlag = 0x10
+	WetFlagVersion WetFlag = 0x20
+	WetFlagLicense WetFlag = 0x40
 )
+
+func (flag WetFlag) Is(other WetFlag) bool {
+	return flag & other == other
+}
 
 type WetBin struct {
 	Path			string
@@ -17,6 +24,6 @@ type WetBin struct {
 
 type WetArgs struct {
 	Bin				WetBin
-	Flags			uint8
+	Flags			WetFlag
 	Path			*string
 }

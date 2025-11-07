@@ -1,0 +1,24 @@
+macro help
+    wet_name " is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.\n" + puts
+    "It's:\n" puts
+    "  - At some points a pre-build.\n" puts
+    "  - At other parts a post-build.\n" puts
+    "  - You may even call it a build-system.\n" puts
+    "\n" puts
+    "In other terms, " wet_name + " is a collection of tasks you'd usually see run in a project to initialize tools and set up for active\n" + puts
+    " development. It could be downloading a file, unzipping that file, placing some of its content in different locations,\n" puts
+    " making everything simple for the new user by doing all the small work for you.\n\n" puts
+
+    "It's sort of there in the name. *" wet_name + "* is the liquid as it's poured from the kettle into every cup of the dozens of\n" + puts
+    " people visiting you. You shouldn't need to do it yourself, *" wet_name + "* is the servant you've hired to do it for you,\n" + puts
+    " and it does exactly as you've told it to.\n\n" puts
+
+    commands "\n" puts
+
+    "For more info, see: " wet_url + "\n\n" + puts
+
+    "Released under MIT License: " wet_url + "/blob/master/LICENSE\n\n" + puts
+
+    "Copyright (c) " wet_copy_year + " " + wet_copy + "\n" + puts
+end
+

@@ -1,0 +1,12 @@
+"test indent\n" puts
+"foo"
+indent "    foo" test=
+
+"test nindent 1\n" puts
+"foo"
+1 nindent "    foo" test=
+
+"test nindent 3\n" puts
+"foo"
+3 nindent "            foo" test=
+

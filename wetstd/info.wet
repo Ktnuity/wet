@@ -1,0 +1,7 @@
+macro wet_version "v0.0.0" end
+macro wet_name "wet" end
+macro wet_license "MIT License" end
+macro wet_copy "Kirdow" end
+macro wet_copy_year "2025" end
+macro wet_org "Ktnuity" end
+macro wet_url "https://github.com/" wet_org + "/" + wet_name + end

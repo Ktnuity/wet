@@ -1,0 +1,7 @@
+std.wet
+
+info.wet
+commands.wet
+help.wet
+version.wet
+license.wet

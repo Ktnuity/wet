@@ -1,0 +1,5 @@
+macro version
+    wet_name " " + wet_version + "\n" + puts
+    "Copyright (c) " wet_copy_year + " " + wet_copy + "\n" + puts
+    "Released under " wet_license + ".\n" + puts
+end

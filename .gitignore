@@ -3,3 +3,6 @@
 
 # Wet
 /.wet/
+
+# Generated
+/cmd/cli/std/

@@ -1,0 +1,42 @@
+macro test=
+    "test_expect" store
+    "test_value" store
+
+"Result:  " "test_value" load + "\n" + puts
+"Match:   " "test_expect" load + "\n" + puts
+"Verfict: "
+    "test_value" load
+    "test_expect" load
+        = if
+            "Success"
+          else
+            "Failure"
+          end
+    + "\n" + puts
+end
+
+macro indent "    " swap + end
+
+macro nindent
+    swap "@nindent" store
+    
+    0 while 2dup > do
+        "@nindent" load
+        indent
+        "@nindent" store
+
+        1 +
+    end
+    drop
+    drop
+
+    "@nindent" load
+end
+
+macro iputs
+    indent puts
+end
+
+macro niputs
+    nindent puts
+end

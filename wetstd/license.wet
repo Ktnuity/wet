@@ -1,0 +1,22 @@
+macro license
+    wet_name " is released under " + wet_license + "\n\n" + puts
+    "Copyright (c) " wet_copy_year + " " + wet_copy + "\n\n" + puts
+
+    "Permission is hereby granted, free of charge, to any person obtaining a copy of this software\n" puts
+    "and associated documentation files (the \"Software\"), to deal in the Software without\n" puts
+    "restriction, including without limitation the rights to use, copy, modify, merge, publish,\n" puts
+    "distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the\n" puts
+    "Software is furnished to do so, subject to the following conditions:\n\n" puts
+
+    "The above copyright notice and this permission notice shall be included in all copies or\n" puts
+    "substantial portions of the Software.\n\n" puts
+
+    "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n" puts
+    "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n" puts
+    "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL\n" puts
+    "THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR\n" puts
+    "OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,\n" puts
+    "ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR\n" puts
+    "OTHER DEALINGS IN THE SOFTWARE.\n" puts
+
+end
