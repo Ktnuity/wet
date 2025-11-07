@@ -5,4 +5,4 @@
 /.wet/
 
 # Generated
-/cmd/cli/std/
+/internal/stdlib/std/
