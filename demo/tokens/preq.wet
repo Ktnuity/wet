@@ -1,0 +1,42 @@
+macro log
+    "] " swap + "\n" + puts
+end
+
+macro remove
+    dup exist if
+        "removing: " over tostring + log
+        
+        dup rm ! if
+            "failed to remove: " over tostring + log
+            exit
+        end
+    end
+    drop
+end
+
+macro validate_exist
+    dup exist ! if
+        "file " over tostring + " could not be found. exiting..." log
+        exit
+    end
+
+    drop
+end
+
+macro download_or_fail
+    swap over
+    download ! if
+        "download failed." log
+        exit
+    end
+
+    "validating download." log
+
+    validate_exist
+
+    "download success." log
+end
+
+macro cleanup
+    :license.txt remove
+end

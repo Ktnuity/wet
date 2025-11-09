@@ -1,0 +1,20 @@
+@include preq.wet
+
+"cleaning up old files." log
+cleanup
+
+"running main token test." log
+
+"downloading license." log
+"https://raw.githubusercontent.com/Ktnuity/wet/refs/heads/master/LICENSE" :license.txt download_or_fail
+
+:license.txt readfile ! if
+    "failed to read license file." log
+    exit
+end
+
+"license file content:" log
+puts
+
+"running last cleanup." log
+cleanup

@@ -44,7 +44,12 @@ func getTokenDir() (string, error) {
 		}
 	}
 
-	wetDir = "~/.wet"
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	wetDir = filepath.Join(homeDir, ".wet")
 	s, err = os.Stat(wetDir)
 	if err != nil {
 		if err := os.MkdirAll(wetDir, 0755); err != nil {

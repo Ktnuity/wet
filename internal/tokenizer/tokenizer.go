@@ -180,7 +180,7 @@ func isString(str string) bool {
 }
 
 func isPath(str string) bool {
-	return strings.HasPrefix(str, "./") || strings.HasPrefix(str, "/")
+	return strings.HasPrefix(str, "./") || strings.HasPrefix(str, "/") || strings.HasPrefix(str, ":")
 }
 
 var symbols = map[string]bool{
