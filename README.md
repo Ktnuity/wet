@@ -15,7 +15,7 @@ It's sort of there in the name. `wet` is the liquid as it's poured from the kett
 This project is WIP so what follows below is mostly a plan for what will become. And more will of course follow once it's completed.
 
 <details>
-    <summary><code>Language</code>: Information about the language that powers **wet**</summary>
+    <summary><code>Language</code>: Information about the language that powers <ins>wet</ins></summary>
 
 ## Arithmetics
 `wet` would support arithmetics similar to that of `porth`. The way this would work is by utilizing [Reverse Polish Notation](https://en.wikipedia.org/wiki/Reverse_Polish_notation). So instead of `x + y` as we humans normally do it, we'd use `x y +`. `wet` would support all of these:
@@ -91,7 +91,7 @@ Resource Locations would use `\ ` to excape a space, and `\\` to escape a backsl
 </details>
 
 <details>
-    <summary><code>Tools</code>: Tools and commants that's built into **wet**'s build system</summary>
+    <summary><code>Tools</code>: Tools and commants that's built into <ins>wet</ins>'s build system</summary>
 
 ## Tokens vs Files
 When a task downloads to a file, it would need an absolute file in relation to your `.git` directory location. However, in order to allow for temporary paths, you will be able to use tokens. To create a token file, you write `:<token>` instead of `<file>`. The prefix of `:` indicates a token being used. On the back-end, this would use a `~/.wet/` for storage, or `./.wet` if manually created next to `./.git`.
@@ -103,6 +103,13 @@ When a task downloads to a file, it would need an absolute file in relation to y
   - downloads the file/resource at `<url>` into `<dst>`
     - both `<url>` and `<dst>` is consumed.
     - pushes `true` if successful, `false` if unsuccessful.
+- `<src> readfile`
+  - `<src>` expects any resource location.
+  - loads the file into memory.
+    - `<src>` is consumed.
+    - pushes `<data> true` if successful, `false` if unsuccessful.
+      - `<data>` is a string containing file content.
+      - fails if file is binary.
 - `<src> <dst> move`
   - `<src>` and `<dst>` both expects any resource location.
   - moves `<src>` to `<dst>`
@@ -155,7 +162,7 @@ When a task downloads to a file, it would need an absolute file in relation to y
   - `<res>` expects any resource location.
   - `<string>` expects any string.
   - concatenates `<res>` and `<string>` with a directory separator.
-    - pushes `<res> true` resource location if successful, `false` otherwise.
+    - pushes `<res>`.
 - `<string> <string> concat`
   - `<string>` expects any string.
   - concatenates both strings with no separator.
@@ -170,15 +177,15 @@ When a task downloads to a file, it would need an absolute file in relation to y
 - `<string> token`
   - `<string>` expects any string.
   - turns `<string>` into a token resource location.
-    - pushes `:<token> true` if successful, `false` otherwise.
+    - pushes `:<token>`.
 - `<string> absolute`
   - `<string>` expects any string.
   - turns `<string>` into a resource location file relative to `git` root.
-    - pushes `/<filepath> true` if successful, `false` otherwise.
+    - pushes `/<filepath>`.
 - `<string> relative`
   - `<string>` expects any string.
   - turns `<string>` into a resource location file relative to current work dir of script.
-    - pushes `./<filepath> true` if successful, `false` otherwise.
+    - pushes `./<filepath>`.
 - *more to come...*
 
 </details>
