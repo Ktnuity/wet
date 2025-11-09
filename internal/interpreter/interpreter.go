@@ -571,6 +571,54 @@ func (ip *Interpreter) Step() (bool, error) {
 			return false, fmt.Errorf("failed to run step. %% operator failed. failure pushing value: %v", err)
 		}
 		ip.runtimev("pushed %d\n", result)
+	} else if token.Equals("++", types.TokenTypeSymbol) {
+		if ip.stack.Len() < 1 {
+			return ip.runtimeverr("failed to run step. ++ operator failed. stack is empty.\n")
+		}
+
+		ip.runtimev("increment top stack value.\n")
+		v1, err := ip.pop()
+		if err != nil {
+			return ip.runtimeverr("failed to run step. ++ operator failed. failed to get value: %v\n", err)
+		}
+
+		n1, ok := v1.Int()
+		if !ok {
+			return ip.runtimeverr("failed to run step. ++ operator failed. failed tog et value type.\n")
+		}
+		ip.runtimev("popped %d\n", n1)
+
+		result := n1 + 1
+
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. ++ operator failed. failure pushing value: %v", err)
+		}
+		ip.runtimev("pushed %d\n", result)
+	} else if token.Equals("--", types.TokenTypeSymbol) {
+		if ip.stack.Len() < 1 {
+			return ip.runtimeverr("failed to run step. -- operator failed. stack is empty.\n")
+		}
+
+		ip.runtimev("decrement top stack value.\n")
+		v1, err := ip.pop()
+		if err != nil {
+			return ip.runtimeverr("failed to run step. -- operator failed. failed to get value: %v\n", err)
+		}
+
+		n1, ok := v1.Int()
+		if !ok {
+			return ip.runtimeverr("failed to run step. -- operator failed. failed tog et value type.\n")
+		}
+		ip.runtimev("popped %d\n", n1)
+
+		result := n1 - 1
+
+		err = ip.ipush(result)
+		if err != nil {
+			return false, fmt.Errorf("failed to run step. -- operator failed. failure pushing value: %v", err)
+		}
+		ip.runtimev("pushed %d\n", result)
 	} else if token.Equals("dup", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
 			return ip.runtimeverr("failed to run step. dup operator failed. stack is empty.\n")
