@@ -1,0 +1,171 @@
+macro ok "ok\n" puts end
+macro fail "fails" load 1 + "fails" store "fail\n" puts end
+macro verdict "fails" load dup 0 = if "\nverdict: ok\n" puts else "\nverdict: fail (failed " swap + " times)\n" + puts end end
+macro test "testing " swap + "\n" + puts end
+macro beg "test segment: " swap + "\n" + puts end
+macro truthy if ok else fail end end
+macro falsy unless ok else fail end end
+macro eq = truthy end
+macro neq = falsy end
+0 "fails" store
+
+"boolean" beg
+
+"&&" test
+0 0 && falsy
+0 1 && falsy
+1 0 && falsy
+1 1 && truthy
+
+"||" test
+0 0 || falsy
+0 1 || truthy
+1 0 || truthy
+1 1 || truthy
+
+"logical" beg
+
+"=" test
+0 0 = truthy
+1 1 = truthy
+-5 -5 = truthy
+5 -5 = falsy
+-5 5 = falsy
+
+"hello" "hello" = truthy
+"foo" "bar" = falsy
+-5 tostring 5 tostring = falsy
+
+"!=" test
+0 0 != falsy
+1 1 != falsy
+-5 -5 != falsy
+5 -5 != truthy
+-5 5 != truthy
+
+"hello" "hello" != falsy
+"foo" "bar" != truthy
+-5 tostring 5 tostring != truthy
+
+"<" test
+0 0 < falsy
+0 1 < truthy
+1 0 < falsy
+1 1 < falsy
+"apple" "banana" < truthy
+"apple" "apple" < falsy
+"apple" "appel" < falsy
+"appel" "apple" < truthy
+
+">" test
+0 0 > falsy
+0 1 > falsy
+1 0 > truthy
+1 1 > falsy
+"apple" "banana" > falsy
+"apple" "apple" > falsy
+"banana" "apple" > truthy
+"appel" "apple" > falsy
+"apple" "appel" > truthy
+
+"<=" test
+0 0 <= truthy
+0 1 <= truthy
+1 0 <= falsy
+1 1 <= truthy
+"apple" "banana" <= truthy
+"apple" "apple" <= truthy
+"apple" "appel" <= falsy
+"appel" "apple" <= truthy
+
+">=" test
+0 0 >= truthy
+0 1 >= falsy
+1 0 >= truthy
+1 1 >= truthy
+"apple" "banana" >= falsy
+"apple" "apple" >= truthy
+"banana" "apple" >= truthy
+"appel" "apple" >= falsy
+"apple" "appel" >= truthy
+
+"!" test
+1 ! falsy
+0 ! truthy
+"" ! truthy
+"a" ! falsy
+
+"bitwise" beg
+
+"&" test
+1 4 & 0 eq
+1 4 & 5 neq
+1 5 & 5 neq
+1 5 & 1 eq
+15 5 & 5 eq
+
+"|" test
+1 4 | 5 eq
+1 5 | 5 eq
+8 4 | 2 1 | | 15 eq
+
+"^" test
+1 1 ^ 0 eq
+1 0 ^ 1 eq
+0 1 ^ 1 eq
+0 0 ^ 0 eq
+7 5 ^ 2 eq
+
+"~" test
+5 ~ 15 & 10 eq
+0 ~ 15 & 15 eq
+15 ~ 15 & 0 eq
+
+"arithmetics" beg
+
+"+" test
+1 1 + 2 eq
+1 9 + 10 eq
+-3 10 + 7 eq
+3 -10 + -7 eq
+34 35 + 69 eq
+
+"a" "b" + "ab" eq
+
+"-" test
+1 1 - 0 eq
+9 9 - 0 eq
+69 34 - 35 eq
+100 200 - -100 eq
+
+"/" test
+69 3 / 23 eq
+333 3 / 111 eq
+1000 3 / 333 eq
+0 0 / 0 eq
+
+"*" test
+5 5 * 25 eq
+6 6 * 36 eq
+0 0 * 0 eq
+-1 -1 * 1 eq
+
+"%" test
+15 3 % 0 eq
+66 10 % 6 eq
+1000 3 % 1 eq
+
+"++" test
+15 ++ 16 eq
+-1 ++ 0 eq
+-999 ++ -998 eq
+
+"--" test
+15 -- 14 eq
+101 -- 100 eq
+1 -- 0 eq
+1 -- -- -1 eq
+-1 -- -2 eq
+-999 -- -1000 eq
+
+verdict
