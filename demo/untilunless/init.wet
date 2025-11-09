@@ -1,0 +1,110 @@
+macro ok
+    "ok\n" puts
+end
+
+macro fail
+    "fails" load
+    1 +
+    "fails" store
+
+    "fail\n" puts
+end
+
+macro verdict
+    "fails" load
+
+    dup 0 = if
+        "\nverdict: ok\n" puts
+    else
+        "\nverdict: fail (failed " swap + " times)\n" + puts
+    end
+end
+
+macro test "testing " swap + "\n" + puts end
+
+0 "fails" store
+
+"testing if\n" puts
+
+"true if" test
+
+1 if
+    ok
+end
+
+"false if" test
+
+0 if
+    fail
+end
+
+"true if else" test
+1 if
+    ok
+else
+    fail
+end
+
+"false if else" test
+0 if
+    fail
+else
+    ok
+end
+
+"testing while\n"
+0 5 while dup 0 > do
+    swap over + swap
+    1 -
+end
+drop
+
+"while sum(1,5)" test
+
+15 = if
+    ok
+else
+    fail
+end
+
+"testing unless\n" puts
+
+"false unless" test
+0 unless
+    ok
+end
+
+"true unless" test
+1 unless
+    fail
+end
+
+"false unless else" test
+0 unless
+    ok
+else
+    fail
+end
+
+"true unless else" test
+1 unless
+    fail
+else
+    ok
+end
+
+"testing until\n" puts
+"until sum(1,5)" test
+#0 5 until dup 0 = do
+#swap over + swap
+#1 -
+#end
+#drop
+
+#15 = if
+#ok
+#else
+#fail
+#end
+
+verdict

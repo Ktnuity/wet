@@ -154,6 +154,8 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 
 		if instruction.Token.Equals("if", types.TokenTypeKeyword) {
 			ipStack.Push(idx)
+		} else if instruction.Token.Equals("unless", types.TokenTypeKeyword) {
+			ipStack.Push(idx)
 		} else if instruction.Token.Equals("else", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
 			if !ok {
@@ -161,7 +163,7 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 			}
 
 			other := &instructions[ip]
-			if !other.Token.Equals("if", types.TokenTypeKeyword) {
+			if !other.Token.Equals("if", types.TokenTypeKeyword) && !other.Token.Equals("unless", types.TokenTypeKeyword) {
 				return nil, fmt.Errorf("failed to process instruction. else reached without if at index %d", idx)
 			}
 
@@ -190,7 +192,7 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 			}
 
 			other := &instructions[ip]
-			if other.Token.Equals("if", types.TokenTypeKeyword) {
+			if other.Token.Equals("if", types.TokenTypeKeyword) || other.Token.Equals("unless", types.TokenTypeKeyword) {
 				other.Next = idx + 1
 			} else if other.Token.Equals("else", types.TokenTypeKeyword) {
 				other.Next = idx + 1
