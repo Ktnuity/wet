@@ -1,0 +1,39 @@
+macro ok "ok\n" puts end
+macro fail "fails" load 1 + "fails" store "fail\n" puts end
+macro verdict "fails" load dup 0 = if "\nverdict: ok\n" puts else "\nverdict: fail (failed " swap + " times)\n" + puts end end
+macro test "testing " swap + "\n" + puts end
+macro beg "test segment: " swap + "\n" + puts end
+macro truthy if ok else fail end end
+macro falsy unless ok else fail end end
+macro eq = truthy end
+macro neq = falsy end
+
+macro test_path
+    swap tostring eq
+end
+
+0 "fails" store
+
+"basic" beg
+
+"relative" test
+./init.wet "init.wet" test_path
+"absolute" test
+/init.wet "init.wet" test_path
+"token" test
+:init.wet "init.wet" test_path
+
+"spaces" beg
+
+"relative" test
+./init\ file.wet "init file.wet" test_path
+./init\ dir/file.wet "init dir/file.wet" test_path
+"absolute" test
+/foo\ bar/file.wet "foo bar/file.wet" test_path
+/init\ file.wet "init file.wet" test_path
+"token" test
+:foo\ bar/file.wet "foo bar/file.wet" test_path
+:init\ file.wet "init file.wet" test_path
+:init/foo\ bar.wet "init/foo bar.wet" test_path
+
+verdict

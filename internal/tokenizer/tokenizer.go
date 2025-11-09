@@ -139,6 +139,23 @@ func nextWord(str string) (*string, string) {
 		}
 		// No closing quote found - return entire string as error token
 		return util.AsRef(""), str
+	} else if str[0] == '.' || str[0] == '/' || str[0] == ':' {
+		escaped := false
+		for i := 1; i < len(str); i++ {
+			if escaped {
+				escaped = false
+				continue
+			}
+			if str[i] == '\\' {
+				escaped = true
+				continue
+			}
+			if str[i] == ' ' {
+				return util.AsRef(strings.TrimSpace(str[i+1:])), strings.ReplaceAll(str[:i], "\\", "")
+			}
+		}
+
+		return util.AsRef(""), str
 	}
 
 	parts := strings.Fields(str)
