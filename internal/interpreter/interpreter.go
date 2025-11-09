@@ -958,6 +958,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			truthy = n1 != 0
 		}
 
+		if inst.Mode == DoModeUntil {
+			truthy = !truthy
+		}
+
 		if !truthy {
 			ip.ip = int(inst.Next)
 			return true, nil
@@ -969,6 +973,8 @@ func (ip *Interpreter) Step() (bool, error) {
 		}
 	} else if token.Equals("while", types.TokenTypeKeyword) {
 		ip.runtimev("while (do nothing).\n")
+	} else if token.Equals("until", types.TokenTypeKeyword) {
+		ip.runtimev("until (do nothing).\n")
 	} else if token.Equals("=", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
 			return ip.runtimeverr("failed to run step. = operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())

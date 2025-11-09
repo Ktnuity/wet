@@ -10,7 +10,14 @@ import (
 type Instruction struct {
 	Token		*types.Token
 	Next		int64
+	Mode		uint8
 }
+
+type DoMode	= uint8
+const (
+	DoModeWhile DoMode = 0
+	DoModeUntil DoMode = 1
+)
 
 func CreateInstruction(token *types.Token) Instruction {
 	return Instruction{
@@ -170,7 +177,7 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 			other.Next = idx + 1
 
 			ipStack.Push(idx)
-		} else if instruction.Token.Equals("while", types.TokenTypeKeyword) {
+		} else if instruction.Token.Equals("while", types.TokenTypeKeyword) || instruction.Token.Equals("until", types.TokenTypeKeyword) {
 			ipStack.Push(idx)
 		} else if instruction.Token.Equals("do", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
@@ -179,12 +186,17 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 			}
 
 			other := &instructions[ip]
-			if !other.Token.Equals("while", types.TokenTypeKeyword) {
-				return nil, fmt.Errorf("failed to process instruction. do reached without while at index %d", idx)
+			if !other.Token.Equals("while", types.TokenTypeKeyword) && !other.Token.Equals("until", types.TokenTypeKeyword){
+				return nil, fmt.Errorf("failed to process instruction. do reached without while or until at index %d", idx)
 			}
 
 			ipStack.Push(idx);
 			instruction.Next = ip
+			
+			switch other.Token.Value {
+			case "while": instruction.Mode = DoModeWhile
+			case "until": instruction.Mode = DoModeUntil
+			}
 		} else if instruction.Token.Equals("end", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
 			if !ok {
