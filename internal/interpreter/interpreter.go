@@ -909,6 +909,30 @@ func (ip *Interpreter) Step() (bool, error) {
 			ip.ip = int(inst.Next)
 			return true, nil
 		}
+	} else if token.Equals("unless", types.TokenTypeKeyword) {
+		if ip.stack.Len() < 1 {
+			return ip.runtimeverr("failed to run step. unless operator failed. stack is empty.\n")
+		}
+
+		ip.runtimev("validating unless-condition.\n")
+		v1, err := ip.pop()
+		if err != nil {
+			return ip.runtimeverr("failed to run step. unless operator failed. failed to get condition value: %v\n", err)
+		}
+
+		var truthy bool = false
+		if s1, ok := v1.String(); ok {
+			ip.runtimev("popped \"%s\"\n", s1)
+			truthy = len(s1) > 0
+		} else if n1, ok := v1.Int(); ok {
+			ip.runtimev("popped %d\n", n1)
+			truthy = n1 != 0
+		}
+
+		if truthy {
+			ip.ip = int(inst.Next)
+			return true, nil
+		}
 	} else if token.Equals("else", types.TokenTypeKeyword) {
 		if inst.Next != -1 {
 			ip.ip = int(inst.Next)
@@ -934,6 +958,10 @@ func (ip *Interpreter) Step() (bool, error) {
 			truthy = n1 != 0
 		}
 
+		if inst.Mode == DoModeUntil {
+			truthy = !truthy
+		}
+
 		if !truthy {
 			ip.ip = int(inst.Next)
 			return true, nil
@@ -945,6 +973,8 @@ func (ip *Interpreter) Step() (bool, error) {
 		}
 	} else if token.Equals("while", types.TokenTypeKeyword) {
 		ip.runtimev("while (do nothing).\n")
+	} else if token.Equals("until", types.TokenTypeKeyword) {
+		ip.runtimev("until (do nothing).\n")
 	} else if token.Equals("=", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
 			return ip.runtimeverr("failed to run step. = operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
