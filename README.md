@@ -239,6 +239,30 @@ When a task downloads to a file, it would need an absolute file in relation to y
 
 </details>
 
+# Contributing?
+Contributing is not needed, this section is mostly to document the development cycle I follow. But if you do want to contribute, this applies to you as well.
+
+<details>
+    <summary><code>Branches</code>: Branches used for development</summary>
+
+### `master`
+- Main branch.
+- Only updates on new version changes.
+- Never pushed directly to.
+
+### `dev`
+- Main development branch.
+- Merges into master when a new version is ready.
+- Never pushed directly to.
+
+### Feature branches
+- Main implementation branch.
+- Merges into dev when a new feature or fix is ready.
+- This is what you should use when contributing.
+  - If you've forked, you may still use your `dev` branch in your pull request.
+
+</details>
+
 # Credits
 Inspired by these projects:
 - [`markut`](https://github.com/tsoding/markut) by [Tsoding/Rexim](https://github.com/tsoding).
