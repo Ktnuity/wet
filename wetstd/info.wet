@@ -1,4 +1,4 @@
-macro wet_version "v0.0.0" end
+macro wet_version "v0.1.0" end
 macro wet_name "wet" end
 macro wet_license "MIT License" end
 macro wet_copy "Kirdow" end
