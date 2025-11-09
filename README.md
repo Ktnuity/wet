@@ -130,6 +130,11 @@ When a task downloads to a file, it would need an absolute file in relation to y
   - checks the existence of a `<res>` file.
     - `<res>` is consumed.
     - pushes `true` if file created or present, `false` if failure.
+- `<res> mkdir`
+  - `<res>` expects any resource location.
+  - checks the existence of a `<res>` directory.
+    - `<res>` is consumed.
+    - pushes `true` if directory created or present, `false` if failure.
 - `<res> rm`
   - `<res>` expects any resource location.
   - removes `<res>` from existence.

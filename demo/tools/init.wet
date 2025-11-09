@@ -1,0 +1,42 @@
+macro log
+    "] " swap + "\n" + puts
+end
+
+./test.txt exist if
+    "license exists. removing." log
+
+    ./test.txt rm ! if
+        "failed to remove file." log
+
+        exit
+    end
+
+    "file removed." log
+end
+
+"downloading license..." log
+"https://raw.githubusercontent.com/Ktnuity/wet/refs/heads/master/LICENSE" ./test.txt download ! if
+    "download failed." log
+    exit
+end
+
+./test.txt exist ! if
+    "download success but file missing." log
+    exit
+end
+
+"download success." log
+
+./test.txt readfile ! if
+    "failed to read downloaded file." log
+    exit
+end
+
+"license downloaded:" log
+puts
+
+./test.txt rm if
+    "license file removed." log
+else
+    "failed cleanup." log
+end

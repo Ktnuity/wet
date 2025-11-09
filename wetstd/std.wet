@@ -40,3 +40,7 @@ end
 macro niputs
     nindent puts
 end
+
+macro putln
+    "\n" + puts
+end

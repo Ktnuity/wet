@@ -37,7 +37,14 @@ func Load(args *types.WetArgs) (string, ExitCallback) {
 	} else {
 		sourcePath = args.Path
 
-		inputSource, err = loadFile(*sourcePath)
+		lastIndex := strings.LastIndex(strings.ReplaceAll(*sourcePath, "\\", "/"), "/")
+		dir := (*sourcePath)[:lastIndex]
+		if dir != "" {
+			err = os.Chdir(dir)
+			util.ExitWithError(err, util.AsRef("Failed to change directory"))
+		}
+
+		inputSource, err = loadFile((*sourcePath)[lastIndex+1:])
 		util.ExitWithError(err, util.AsRef("Failed to load input source"))
 	}
 
@@ -46,12 +53,6 @@ func Load(args *types.WetArgs) (string, ExitCallback) {
 	source, err = processSource(inputSourceWithStd, 4, args)
 	if sourcePath != nil {
 		util.ExitWithError(err, util.AsRef(fmt.Sprintf("Failed to load file: %s", *sourcePath)))
-
-		dir := (*sourcePath)[:strings.LastIndex(strings.ReplaceAll(*sourcePath, "\\", "/"), "/")]
-		if dir != "" {
-			err = os.Chdir(dir)
-			util.ExitWithError(err, util.AsRef("Failed to change directory"))
-		}
 	} else {
 		util.ExitWithError(err, util.AsRef("Failed to process source"))
 	}

@@ -1,0 +1,91 @@
+@include preq.wet
+
+"cleaning up old files and setting up pre-requisites." log
+preq
+
+"running main zip test." log
+
+"downloading zip." log
+
+"https://raw.githubusercontent.com/Ktnuity/wet/refs/heads/master/demo/zip/archive.zip" ./file.zip download ! if
+    "download zip file failed." log
+    exit
+end
+
+"validating download." log
+
+./file.zip validate_exist
+
+"download success." log
+
+"unzipping file." log
+
+./file.zip ./root unzip
+
+dup -1 = if
+    "failed to unzip file." log
+    exit
+end
+
+swap 0 > if
+    "demo zip should not include any directories." log
+    exit
+end
+
+2 != if
+    "demo zip should contain exactly 2 files." log
+    exit
+end
+
+./root lsf
+dup 2 != if
+    "demo zip contained 2 files but only " over + " found." log
+    exit
+end
+
+./root lsd
+dup 0 != if
+    "demo zip contained no directories but " over + " were found." log
+    exit
+end
+
+0 ./root getf
+dup "" = if
+    "demo zip file[0] is undefined." log
+    exit
+end
+
+./root over concat
+dup exist ! if
+    "failed to find extracted file " over tostring + log
+    exit
+end
+
+dup readfile ! if
+    "failed to read extracted file " over tostring + log
+    exit
+end
+
+"content of first file:" log puts
+
+1 ./root getf
+dup "" = if
+    "demo zip file[1] is undefined." log
+    exit
+end
+
+./root over concat
+dup exist ! if
+    "failed to find extracted file " over tostring + log
+    exit
+end
+
+dup readfile ! if
+    "failed to read extracted file " over tostring + log
+    exit
+end
+
+"content of second file:" log puts
+
+"running last cleanup." log
+cleanup

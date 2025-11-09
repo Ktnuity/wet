@@ -136,6 +136,22 @@ func (t *Token) GetStringValue() (string, bool) {
 	return UnescapeString(t.Value), true
 }
 
+func (t *Token) GetPathValue() (string, bool) {
+	if t == nil {
+		return "", false
+	}
+	
+	if !t.Equals("", TokenTypePath) {
+		return "", false
+	}
+
+	if t.Value == "" {
+		return "", false
+	}
+
+	return UnescapeString(t.Value), true
+}
+
 func UnescapeString(str string) string {
 	if len(str) < 2 || str[0] != '"' || str[len(str)-1] != '"' {
 		return str

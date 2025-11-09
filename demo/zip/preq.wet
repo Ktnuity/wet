@@ -1,0 +1,40 @@
+macro log
+    "] " swap + "\n" + puts
+end
+
+macro remove
+    dup exist if
+        "removing: " over tostring + log
+        
+        dup rm ! if
+            "failed to remove: " over tostring + log
+            exit
+        end
+    end
+    drop
+end
+
+macro validate_exist
+    dup exist ! if
+        "file " over tostring + " could not be found. exiting..." log
+        exit
+    end
+
+    drop
+end
+
+macro cleanup
+    ./root/foo.txt remove
+    ./root/bar.txt remove
+    ./file.txt remove
+    ./root remove
+end
+
+macro preq
+    cleanup
+
+    ./root mkdir ! if
+        "failed to create ./root directory." log
+        exit
+    end
+end

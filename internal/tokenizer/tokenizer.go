@@ -162,12 +162,13 @@ var keywords = map[string]bool{
 	"if": true, "unless": true, "else": true,
 	"dup": true, "over": true, "swap": true, "2dup": true, "2swap": true, "drop": true, "nop": true,
 	"store": true, "load": true,
-	"download": true, "move": true, "copy": true, "exist": true, "touch": true, "rm": true,
+	"download": true, "move": true, "copy": true, "exist": true, "touch": true, "mkdir": true, "rm": true, "readfile": true,
 	"unzip": true, "lsf": true, "getf": true, "lsd": true, "getd": true,
 	"concat": true, "tostring": true, "token": true, "absolute": true, "relative": true,
 	"true": true, "false": true,
 	"puts": true,
 	"int": true, "string": true,
+	"exit": true,
 }
 
 func isKeyword(str string) bool {
