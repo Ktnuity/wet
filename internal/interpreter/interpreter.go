@@ -93,6 +93,13 @@ func (ip *Interpreter) Step() (bool, error) {
 		return ip.defaultStep(*result)
 	}
 
+	proc, ok := ip.procs[data.token.Value]
+	if ok {
+		ip.calls.Push(ip.ip + 1)
+		ip.ip = int(proc.Start)
+		return true, nil
+	}
+
 	if data.token.Equals("exit", types.TokenTypeKeyword) {
 		ip.runtimev("exit command. exiting...\n")
 		ip.ip = ip.eop

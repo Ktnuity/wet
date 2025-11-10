@@ -6,3 +6,6 @@
 
 # Generated
 /internal/stdlib/std/
+
+# Test Generated
+/demo/zip/file.zip

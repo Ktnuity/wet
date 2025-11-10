@@ -1,4 +1,4 @@
-macro help
+proc wet_cmd_help 
     wet_name " is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.\n" + puts
     "It's:\n" puts
     "  - At some points a pre-build.\n" puts
@@ -13,7 +13,7 @@ macro help
     " people visiting you. You shouldn't need to do it yourself, *" wet_name + "* is the servant you've hired to do it for you,\n" + puts
     " and it does exactly as you've told it to.\n\n" puts
 
-    commands "\n" puts
+    wet_commands "\n" puts
 
     "For more info, see: " wet_url + "\n\n" + puts
 

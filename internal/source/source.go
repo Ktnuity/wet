@@ -24,16 +24,16 @@ func Load(args *types.WetArgs) (string, ExitCallback) {
 	var source string
 
 	if args.Flags.Is(types.WetFlagHelp) {
-		inputSource = "help\n"
+		inputSource = "wet_cmd_help\n"
 	} else if args.Flags.Is(types.WetFlagVersion) {
-		inputSource = "version\n"
+		inputSource = "wet_cmd_version\n"
 	} else if args.Flags.Is(types.WetFlagLicense) {
-		inputSource = "license\n"
+		inputSource = "wet_cmd_license\n"
 	} else if args.Path == nil {
 		exit = func() {
 			usage(args.Bin.Name)
 		}
-		inputSource = "version\n"
+		inputSource = "wet_cmd_version\n"
 	} else {
 		sourcePath = args.Path
 

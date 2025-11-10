@@ -11,6 +11,7 @@ const (
 	TokenTypeNone TokenType = iota
 	TokenTypeNumber
 	TokenTypeKeyword
+	TokenTypeIdentifier
 	TokenTypePath
 	TokenTypeSymbol
 	TokenTypeString
@@ -19,6 +20,7 @@ const (
 type Token struct {
 	Value		string
 	Type		TokenType
+	Extra		string
 }
 
 func GetTokenTypeName(tokenType TokenType) string {
@@ -26,6 +28,7 @@ func GetTokenTypeName(tokenType TokenType) string {
 	case TokenTypeNone: return "None"
 	case TokenTypeNumber: return "Number"
 	case TokenTypeKeyword: return "Keyword"
+	case TokenTypeIdentifier: return "Identifier"
 	case TokenTypePath: return "Path"
 	case TokenTypeSymbol: return "Symbol"
 	case TokenTypeString: return "String"
@@ -60,7 +63,7 @@ func (token *Token) Format() string {
 	typeName := GetTokenTypeName(token.Type)
 
 	switch token.Type {
-	case TokenTypeNumber, TokenTypeKeyword, TokenTypeSymbol:
+	case TokenTypeNumber, TokenTypeKeyword, TokenTypeSymbol, TokenTypeIdentifier:
 		return fmt.Sprintf("%s(%s)", typeName, token.Value)
 	case TokenTypePath:
 		return EscapePath(token.Value)

@@ -1,4 +1,4 @@
-macro license
+macro wet_cmd_license
     wet_name " is released under " + wet_license + "\n\n" + puts
     "Copyright (c) " wet_copy_year + " " + wet_copy + "\n\n" + puts
 

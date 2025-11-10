@@ -9,7 +9,7 @@ import (
 	"github.com/ktnuity/wet/internal/util"
 )
 
-func TokenizeCode(input string) ([]types.Token) {
+func TokenizeCode(input string) ([]types.Token, error) {
 	result := make([]types.Token, 0, 8)
 
 	commentLess := stripComments(input)
@@ -23,16 +23,52 @@ func TokenizeCode(input string) ([]types.Token) {
 			break
 		}
 
-		tokenType := getTokenType(word)
-		result = append(result, types.Token{
+		tokenType, err := getTokenType(word)
+		if err != nil {
+			return result, fmt.Errorf("failed to tokenize code: %w", err)
+		}
+
+		token := types.Token{
 			Value: word,
 			Type: tokenType,
-		})
+		}
 
+		if word == "proc" {
+			nextScan, word = nextWord(*nextScan)
+			if nextScan == nil {
+				break
+			}
+
+			status, err := validateNormalName(word)
+			if !status {
+				if err != nil {
+					return result, fmt.Errorf("failed to tokenize code: %w", err)
+				} else {
+					return result, fmt.Errorf("failed to tokenize code: proc name '%s' is not valid.", word)
+				}
+			}
+
+			token.Extra = word
+		}
+
+		result = append(result, token)
 		scan = *nextScan
 	}
 
-	return result
+	return result, nil
+}
+
+func validateNormalName(name string) (bool, error) {
+	re, err := regexp.Compile("^[a-z](_?[a-z0-9]+)*$")
+	if err != nil {
+		return false, fmt.Errorf("failed to validate proc name. proc name regex failed to compile: %w", err)
+	}
+
+	if !re.MatchString(name) {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func LogTokens(tokens []types.Token) error {
@@ -185,11 +221,16 @@ var keywords = map[string]bool{
 	"true": true, "false": true,
 	"puts": true,
 	"int": true, "string": true,
+	"proc": true,
 	"exit": true,
 }
 
 func isKeyword(str string) bool {
 	return keywords[str]
+}
+
+func isIdentifier(str string) (bool, error) {
+	return validateNormalName(str)
 }
 
 func isString(str string) bool {
@@ -212,18 +253,27 @@ func isSymbol(str string) bool {
 	return symbols[str]
 }
 
-func getTokenType(str string) types.TokenType {
+func getTokenType(str string) (types.TokenType, error) {
 	if isNumber(str) {
-		return types.TokenTypeNumber
+		return types.TokenTypeNumber, nil
 	} else if isKeyword(str) {
-		return types.TokenTypeKeyword
+		return types.TokenTypeKeyword, nil
+	}
+
+	identifier, err := isIdentifier(str)
+	if err != nil {
+		return types.TokenTypeNone, fmt.Errorf("failed to get token type: %w", err)
+	}
+
+	if identifier {
+		return types.TokenTypeIdentifier, nil
 	} else if isSymbol(str) {
-		return types.TokenTypeSymbol
+		return types.TokenTypeSymbol, nil
 	} else if isPath(str) {
-		return types.TokenTypePath
+		return types.TokenTypePath, nil
 	} else if isString(str) {
-		return types.TokenTypeString
+		return types.TokenTypeString, nil
 	} else {
-		return types.TokenTypeNone
+		return types.TokenTypeNone, nil
 	}
 }

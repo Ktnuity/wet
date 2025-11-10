@@ -1,4 +1,4 @@
-macro test=
+proc stdtest
     "test_expect" store
     "test_value" store
 
@@ -15,9 +15,9 @@ macro test=
     + "\n" + puts
 end
 
-macro indent "    " swap + end
+proc indent "    " swap + end
 
-macro nindent
+proc nindent
     swap "@nindent" store
     
     0 while 2dup > do

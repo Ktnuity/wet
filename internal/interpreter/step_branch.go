@@ -85,14 +85,32 @@ func (ip *Interpreter) StepBranch(d *StepData) *StepResult {
 			return StepOkSkip()
 		}
 	} else if d.token.Equals("end", types.TokenTypeKeyword) {
-		if d.inst.Next != -1 {
-			ip.ip = int(d.inst.Next)
+		if d.inst.Mode == EndModeProc {
+			ret, ok := ip.calls.Pop()
+			if !ok {
+				return ip.runtimeverr("failed to run step. end operator failed. call stack is empty.\n")
+			}
+
+			ip.ip = ret
 			return StepOkSkip()
+		} else {
+			if d.inst.Next != -1 {
+				ip.ip = int(d.inst.Next)
+				return StepOkSkip()
+			}
 		}
 	} else if d.token.Equals("while", types.TokenTypeKeyword) {
 		ip.runtimev("while (do nothing).\n")
 	} else if d.token.Equals("until", types.TokenTypeKeyword) {
 		ip.runtimev("until (do nothing).\n")
+	} else if d.token.Equals("proc", types.TokenTypeKeyword) {
+		ip.runtimev("proc (skip to end).\n")
+		if d.inst.Next == -1 {
+			return ip.runtimeverr("failed to run step. proc operator failed. skip is undefined.\n")
+		}
+
+		ip.ip = int(d.inst.Next)
+		return StepOkSkip()
 	} else {
 		return nil
 	}
