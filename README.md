@@ -88,6 +88,69 @@ Resource Locations would use `\ ` to excape a space, and `\\` to escape a backsl
 - `"<name>"` is local-scope by default.
   - prefix `<name>` with `.` (`".<name>"`) for global scope.
 
+## Macros
+Macros are snippets of code which may be replicated multiple times across the program.<br>
+You define a macro by writing `macro <name>`, and you end it as usual by using `end`.
+
+Example:
+```
+macro my_print
+    dup tostring "\n" + puts
+end
+
+34 my_print
+35 my_print
++ my_print
+drop
+```
+
+`my_print` here is a macro which prints any stack value onto the screen without consuming it.<br>
+When this code is executed, the pre-processor removes all macros and turn it into:
+```
+34 dup tostring "\n" + puts
+35 dup tostring "\n" + puts
++ dup tostring "\n" + puts
+drop
+```
+
+As you can see, macros don't exist at runtime. Because of this, you cannot use macros for recursion.
+
+## Procedures
+Procedures are just like macros, but they persist at runtime, and are called whenever a name is encountered.
+You define a procedure by writing `proc <name>`, and you end it with `end`.
+
+Example:
+```
+proc my_print
+    dup tostring "\n" + puts
+end
+
+34 my_print
+35 my_print
++ my_print
+drop
+```
+
+Unlike with macros, this code looks the same at runtime.
+
+Let's step through parts of the code together.
+1. Instruction is `proc`. `proc` marks a procedure, so we skip to just after `end`.
+2. Instruction is `34`. 34 is pushed to stack.
+3. Instruction is `my_print`. IP after `my_print` (IP of `35`) is pushed to call stack. IP is changed to inside `my_print` body.
+4. Instruction is `dup`. Pops `34` from stack and push it back twice.
+5. Instruction is `tostring`. Pops `34` from stack. Turns it from `int` to `string`. Push `"34"` to stack.
+6. Instruction is `"\n"`. Push `"\n"` to stack.
+7. Instruction is `+`. Pop `"34"` and `"\n"` from stack, concatenate them, and push back `"34\n"`.
+8. Instruction is `puts`. Pop `"34\n"` from stack, consume it, and print it.
+9. Instruction is `end`. `end` has an `EndMode` which now is set to `EndModeProc`. Pops top value from call stack and change IP to it.
+10. Instruction is `35`. 35 is pushed to stack.
+
+You get the idea at this point.
+
+Procedures have the benefit that because they exist in the code at runtime, they support recursion. Check [`demo/proc/init.wet`](./demo/proc/init.wet) for an implementation of Fibonacci procedure in wet.
+
+**Note:** Prefer using procedures when the body is fairly large, and macros when the body is fairly small.
+
 </details>
 
 <details>
