@@ -151,6 +151,13 @@ Procedures have the benefit that because they exist in the code at runtime, they
 
 **Note:** Prefer using procedures when the body is fairly large, and macros when the body is fairly small.
 
+### Returning
+
+Returning uses 3 keywords.
+- `ret` immeditately returns from the procedure.
+- `<drop> dret` drops the top `<drop>` (count) values from stack before returning.
+- `<drop> <keep> iret` stores top `<keep>` (count) values from the stack, drops the next `<drop>` (count) values, then restore the previous `<keep>` (count) values, then returns.
+
 </details>
 
 <details>

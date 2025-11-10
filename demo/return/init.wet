@@ -1,0 +1,28 @@
+proc test_ret
+    dup 1 <= if
+        ret
+    end
+
+    dup -- test_ret
+    swap 2 - test_ret
+    +
+end
+
+proc test_dret
+    0 0 0
+    3 dret
+end
+
+proc test_iret
+    0 swap 0 swap 0 swap
+    3 1 iret
+end
+
+"test_ret\n" puts
+"fib(5) = " 10 test_ret + "\n" + puts
+
+"test_dret\n" puts
+10 test_dret .
+
+"test_iret\n" puts
+10 test_iret .

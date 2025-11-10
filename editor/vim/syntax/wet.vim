@@ -12,7 +12,7 @@ syn match wetComment "\v^#.*$"
 syn match wetComment "\v^//.*$"
 
 " Keywords - Control Flow
-syn keyword wetKeyword if else end while until do macro proc until unless
+syn keyword wetKeyword if else end while until do macro proc until unless ret dret iret
 
 " Stack Operations
 syn keyword wetStackOp dup drop swap over 2dup 2swap nop
