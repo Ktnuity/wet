@@ -13,10 +13,21 @@ type Instruction struct {
 	Mode		uint8
 }
 
+type ProcessTokensResult struct {
+	inst		[]Instruction
+	proc		map[string]Proc
+}
+
 type DoMode	= uint8
 const (
 	DoModeWhile DoMode = 0
 	DoModeUntil DoMode = 1
+)
+
+type EndMode = uint8
+const (
+	EndModeNormal EndMode = 0
+	EndModeProc	EndMode = 1
 )
 
 func CreateInstruction(token *types.Token) Instruction {
@@ -146,14 +157,16 @@ func expandMacros(tokens []types.Token) ([]types.Token, error) {
 	return tokens, nil
 }
 
-func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
+func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 	tokens, err := expandMacros(tokens)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to process tokens: %v.", err)
 	}
 
 	ipStack := &util.Stack[int64]{}
+
+	procs := make(map[string]Proc)
 
 	instructions := CreateInstructions(tokens)
 	for idx := range int64(len(instructions)) {
@@ -162,6 +175,8 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 		if instruction.Token.Equals("if", types.TokenTypeKeyword) {
 			ipStack.Push(idx)
 		} else if instruction.Token.Equals("unless", types.TokenTypeKeyword) {
+			ipStack.Push(idx)
+		} else if instruction.Token.Equals("proc", types.TokenTypeKeyword) {
 			ipStack.Push(idx)
 		} else if instruction.Token.Equals("else", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
@@ -192,7 +207,7 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 
 			ipStack.Push(idx);
 			instruction.Next = ip
-			
+
 			switch other.Token.Value {
 			case "while": instruction.Mode = DoModeWhile
 			case "until": instruction.Mode = DoModeUntil
@@ -203,6 +218,8 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 				return nil, fmt.Errorf("failed to process instruction. end reached without ip-stack at index %d", idx)
 			}
 
+			instruction.Mode = EndModeNormal
+
 			other := &instructions[ip]
 			if other.Token.Equals("if", types.TokenTypeKeyword) || other.Token.Equals("unless", types.TokenTypeKeyword) {
 				other.Next = idx + 1
@@ -212,6 +229,16 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 				doIp := other.Next
 				other.Next = idx + 1
 				instruction.Next = doIp
+			} else if other.Token.Equals("proc", types.TokenTypeKeyword) {
+				instruction.Next = other.Next
+				instruction.Mode = EndModeProc
+				other.Next = idx + 1
+
+				procs[other.Token.Extra] = Proc{
+					other.Token.Extra,
+					ip + 1,
+					idx,
+				}
 			} else {
 				return nil, fmt.Errorf("failed to process instruction. end reached without if or else at index %d", idx)
 			}
@@ -222,5 +249,8 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 		return nil, fmt.Errorf("failed to process instruction. process ended with ip-stack size %d. empty required.", ipStack.Len())
 	}
 
-	return instructions, nil
+	return &ProcessTokensResult{
+		instructions,
+		procs,
+	}, nil
 }

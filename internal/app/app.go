@@ -14,7 +14,11 @@ func EntryPoint(src string, args *types.WetArgs) error {
 		fmt.Printf("Code:\n%s\n", src)
 		fmt.Printf("Tokenizing code...\n")
 	}
-	tokens := tokenizer.TokenizeCode(src)
+	tokens, err := tokenizer.TokenizeCode(src)
+	if err != nil {
+		return fmt.Errorf("failed to init wet: %w", err)
+	}
+
 	if util.HasFlag(args.Flags, types.WetFlagVerboseTokenize) {
 		fmt.Printf("Tokens:\n")
 		tokenizer.LogTokens(tokens)

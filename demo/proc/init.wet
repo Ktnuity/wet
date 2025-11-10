@@ -1,0 +1,22 @@
+proc fib
+    dup 1 > if
+        dup -- fib
+        swap 2 - fib
+        +
+    end
+end
+
+proc try_fib
+    dup tostring ": " + swap fib + "\n" + puts
+end
+
+"fib\n" puts
+
+0 while dup 15 < do
+    dup try_fib
+    ++
+end
+drop
+
+"done\n" puts
+
