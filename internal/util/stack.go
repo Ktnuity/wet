@@ -25,10 +25,26 @@ func (s *Stack[T]) Peek() (T, bool) {
 	return (*s)[len(*s)-1], true
 }
 
+func (s *Stack[T]) PeekRef() (*T, bool) {
+	if len(*s) == 0 {
+		return nil, false
+	}
+	return &(*s)[len(*s)-1], true
+}
+
 func (s *Stack[T]) Len() int {
 	return len(*s)
 }
 
 func (s *Stack[T]) IsEmpty() bool {
 	return len(*s) == 0
+}
+
+func (s *Stack[T]) Clone() Stack[T] {
+	result := make([]T, len(*s))
+	for idx := range s.Len() {
+		result[idx] = (*s)[idx]
+	}
+
+	return result
 }

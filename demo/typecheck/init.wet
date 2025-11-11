@@ -1,0 +1,75 @@
+34 35 + .
+34 69 swap - .
+34 35 + "Ans: " swap + "\n" + puts
+./foo "bar" concat "init.txt" concat tostring "\n" concat puts
+
+5 5 = if
+    "if\n" puts
+end
+
+5 5 != if
+    "no if\n" puts
+end
+
+5 5 = if
+    "if\n"
+else
+    "no else\n"
+end
+puts
+
+5 5 != if
+    "no if\n"
+else
+    "else\n"
+end
+puts
+
+5 5 = unless
+    "no unless\n" puts
+end
+
+5 5 != unless
+    "unless\n" puts
+end
+
+5 5 = unless
+    "no unless\n"
+else
+    "else\n"
+end
+puts
+
+5 5 != unless
+    "unless\n"
+else
+    "no else\n"
+end
+puts
+
+0 while dup 5 < do
+    dup . ++
+end drop
+
+0 until dup 5 < do
+    dup . ++
+end drop
+
+0 0 while dup 5 < do
+    dup tostring ": " + puts
+    swap over +
+        dup .
+    swap
+    ++
+end drop
+"total: " swap + "\n" concat puts
+
+0 0 until dup 5 = do
+    dup tostring ": " + puts
+    swap over +
+        dup .
+    swap
+    ++
+end drop
+"total: " swap + "\n" concat puts
+

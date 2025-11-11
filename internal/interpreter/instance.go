@@ -25,7 +25,7 @@ func CreateNew(tokens []types.Token) (*Interpreter, error) {
 		return nil, fmt.Errorf("failed to create interpreter: %w", err)
 	}
 
-	return &Interpreter{
+	inst := &Interpreter{
 		stack: stack,
 		program: result.inst,
 		procs: result.proc,
@@ -33,5 +33,19 @@ func CreateNew(tokens []types.Token) (*Interpreter, error) {
 		ip: 0,
 		eop: int(len(result.inst)),
 		calls: util.Stack[int]{},
-	}, nil
+	}
+
+	tcd := &TypeCheckData{
+		inst: inst.program,
+		typeStack: util.Stack[ValueType]{},
+		typeStackStack: util.Stack[StackPreview]{},
+		eop: len(inst.program),
+	}
+
+	err = typeCheck(tcd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create interpreter: %w", err)
+	}
+
+	return inst, nil
 }
