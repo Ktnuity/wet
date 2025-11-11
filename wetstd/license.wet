@@ -1,4 +1,4 @@
-macro wet_cmd_license
+proc wet_cmd_license do
     wet_name " is released under " + wet_license + "\n\n" + puts
     "Copyright (c) " wet_copy_year + " " + wet_copy + "\n\n" + puts
 
@@ -18,5 +18,4 @@ macro wet_cmd_license
     "OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,\n" puts
     "ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR\n" puts
     "OTHER DEALINGS IN THE SOFTWARE.\n" puts
-
 end

@@ -1,6 +1,6 @@
 macro ok "ok\n" puts end
-macro fail "fails" load 1 + "fails" store "fail\n" puts end
-macro verdict "fails" load dup 0 = if "\nverdict: ok\n" puts drop else "\nverdict: fail (failed " swap + " times)\n" + puts end end
+macro fail "fails" iload 1 + "fails" store "fail\n" puts end
+macro verdict "fails" iload dup 0 = if "\nverdict: ok\n" puts drop else "\nverdict: fail (failed " swap + " times)\n" + puts end end
 macro test "testing " swap + "\n" + puts end
 macro beg "test segment: " swap + "\n" + puts end
 macro truthy if ok else fail end end

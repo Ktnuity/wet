@@ -1,4 +1,4 @@
-proc wet_cmd_version
+proc wet_cmd_version do
     wet_name " " + wet_version + "\n" + puts
     "Copyright (c) " wet_copy_year + " " + wet_copy + "\n" + puts
     "Released under " wet_license + ".\n" + puts

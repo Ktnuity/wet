@@ -200,7 +200,7 @@ func (ip *Interpreter) StepBranch(d *StepData) *StepResult {
 			return ip.runtimeverr("failed to run step. iret operator failed. %d %d iret requires %d values on stack, had %d.\n", popi, reti, popi + reti + 2, ip.stack.Len() + 2)
 		}
 
-		retStack := util.Stack[StackValue]{}
+		retStack := util.Stack[types.DataType]{}
 
 		for i := range reti {
 			retp, err := ip.pop()

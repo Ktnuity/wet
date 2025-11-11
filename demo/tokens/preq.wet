@@ -1,8 +1,8 @@
-macro log
+proc log in string do
     "] " swap + "\n" + puts
 end
 
-macro remove
+proc remove in path do
     dup exist if
         "removing: " over tostring + log
         
@@ -14,16 +14,16 @@ macro remove
     drop
 end
 
-macro validate_exist
+proc validate_exist in path do
     dup exist ! if
-        "file " over tostring + " could not be found. exiting..." log
+        "file " over tostring + " could not be found. exiting..." + log
         exit
     end
 
     drop
 end
 
-macro download_or_fail
+proc download_or_fail in string path do
     swap over
     download ! if
         "download failed." log
@@ -37,6 +37,6 @@ macro download_or_fail
     "download success." log
 end
 
-macro cleanup
+proc cleanup do
     :license.txt remove
 end

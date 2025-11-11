@@ -43,6 +43,8 @@ func GetCommandArguments() (*types.WetArgs, error) {
 				args.Flags |= types.WetFlagVerboseRuntime
 			case "--verbose-tokenize":
 				args.Flags |= types.WetFlagVerboseTokenize
+			case "--verbose-type-check":
+				args.Flags |= types.WetFlagVerboseTypeCheck
 			case "--verbose":
 				args.Flags |= types.WetFlagVerbose
 			case "--dev":

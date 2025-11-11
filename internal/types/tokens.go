@@ -17,10 +17,20 @@ const (
 	TokenTypeString
 )
 
+type TokenExtraProc struct {
+	Name		string
+	In			[]ValueType
+	Out			[]ValueType
+}
+
+type TokenExtra struct {
+	Proc		*TokenExtraProc
+}
+
 type Token struct {
 	Value		string
 	Type		TokenType
-	Extra		string
+	Extra		TokenExtra
 }
 
 func GetTokenTypeName(tokenType TokenType) string {

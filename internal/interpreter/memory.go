@@ -1,9 +1,13 @@
 package interpreter
 
-import "fmt"
+import (
+	"fmt"
 
-func (ip *Interpreter) load(name string) (StackValue, error) {
-	var value StackValue
+	"github.com/ktnuity/wet/internal/types"
+)
+
+func (ip *Interpreter) load(name string) (types.DataType, error) {
+	var value types.DataType
 	value, ok := ip.memory[name]
 	if !ok {
 		return value, fmt.Errorf("failed to load(%s). value not found.", name)
@@ -24,7 +28,7 @@ func (ip *Interpreter) load(name string) (StackValue, error) {
 	return value, fmt.Errorf("failed to load(%s). value found, but unknown type.", name)
 }
 
-func (ip *Interpreter) store(name string, value StackValue) error {
+func (ip *Interpreter) store(name string, value types.DataType) error {
 	s1, okString := value.String()
 	n1, okInt := value.Int()
 	if okString {

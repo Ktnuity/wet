@@ -8,17 +8,17 @@ import (
 )
 
 type Interpreter struct {
-	stack		util.Stack[StackValue]
+	stack		util.Stack[types.DataType]
 	program		[]Instruction
 	procs		map[string]Proc
-	memory		map[string]StackValue
+	memory		map[string]types.DataType
 	ip			int
 	eop			int
 	calls		util.Stack[int]
 }
 
 func CreateNew(tokens []types.Token) (*Interpreter, error) {
-	var stack util.Stack[StackValue] = util.Stack[StackValue]{}
+	var stack util.Stack[types.DataType] = util.Stack[types.DataType]{}
 
 	result, err := ProcessTokens(tokens)
 	if err != nil {
@@ -29,7 +29,7 @@ func CreateNew(tokens []types.Token) (*Interpreter, error) {
 		stack: stack,
 		program: result.inst,
 		procs: result.proc,
-		memory: make(map[string]StackValue),
+		memory: make(map[string]types.DataType),
 		ip: 0,
 		eop: int(len(result.inst)),
 		calls: util.Stack[int]{},
@@ -37,7 +37,8 @@ func CreateNew(tokens []types.Token) (*Interpreter, error) {
 
 	tcd := &TypeCheckData{
 		inst: inst.program,
-		typeStack: util.Stack[ValueType]{},
+		procs: result.proc,
+		typeStack: util.Stack[types.ValueType]{},
 		typeStackStack: util.Stack[StackPreview]{},
 		eop: len(inst.program),
 	}

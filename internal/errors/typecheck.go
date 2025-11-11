@@ -173,3 +173,11 @@ func (p *PreparedTypeCheck) UnexpectedType(index int, got string) {
 func (p *PreparedTypeCheck) ConnectedTokenError(name string, err error) {
 	p.Throw(fmt.Sprintf("Connected keyword '%s' failed.", name), fmt.Sprintf("Error: %v", err))
 }
+
+func (p *PreparedTypeCheck) CallLeadingError(name string, err error) {
+	p.Throw(fmt.Sprintf("Error leading into '%s' call: %v", name, err))
+}
+
+func (p *PreparedTypeCheck) CallLeavingError(name string, err error) {
+	p.Throw(fmt.Sprintf("Error leaving '%s' call: %v", name, err))
+}

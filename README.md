@@ -117,11 +117,11 @@ As you can see, macros don't exist at runtime. Because of this, you cannot use m
 
 ## Procedures
 Procedures are just like macros, but they persist at runtime, and are called whenever a name is encountered.
-You define a procedure by writing `proc <name>`, and you end it with `end`.
+You define a procedure by writing `proc <name> [<out types>] [in <in types>] do`, and you end it with `end`.
 
 Example:
 ```
-proc my_print
+proc my_print in int do
     dup tostring "\n" + puts
 end
 

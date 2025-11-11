@@ -1,4 +1,4 @@
-proc fib
+proc fib int in int do
     dup 1 > if
         dup -- fib
         swap 2 - fib
@@ -6,8 +6,9 @@ proc fib
     end
 end
 
-proc try_fib
+proc try_fib in int do
     dup tostring ": " + swap fib + "\n" + puts
+#dup tostring ": " + swap "\n" + puts
 end
 
 "fib\n" puts

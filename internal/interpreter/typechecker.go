@@ -9,34 +9,17 @@ import (
 	"github.com/ktnuity/wet/internal/util"
 )
 
-type ValueType uint8
-const (
-	ValueTypeNone ValueType = iota
-	ValueTypeInt
-	ValueTypeString
-	ValueTypePath
-)
-
-func ValueTypeFormat(vt ValueType) string {
-	switch vt {
-	case ValueTypeNone:		return "None"
-	case ValueTypeInt:		return "Int"
-	case ValueTypeString:	return "String"
-	case ValueTypePath:		return "Path"
-	default:				return "Unknown"
-	}
-}
-
 type StackPreview struct {
-	stack			util.Stack[ValueType]
-	refStack		util.Stack[ValueType]
+	stack			util.Stack[types.ValueType]
+	refStack		util.Stack[types.ValueType]
 	cause			*Instruction
 	refCause		*Instruction
 }
 
 type TypeCheckData struct {
 	inst			[]Instruction
-	typeStack		util.Stack[ValueType]
+	procs			map[string]Proc
+	typeStack		util.Stack[types.ValueType]
 	typeStackStack	util.Stack[StackPreview]
 	eop				int
 }
@@ -54,7 +37,7 @@ func popStack(data *TypeCheckData) *StackPreview {
 		return nil
 	}
 
-	return &preview 
+	return &preview
 }
 
 func peekStack(data *TypeCheckData) *StackPreview {
@@ -66,7 +49,7 @@ func peekStack(data *TypeCheckData) *StackPreview {
 	return preview
 }
 
-func compareStacks(current util.Stack[ValueType], other util.Stack[ValueType]) error {
+func compareStacks(current util.Stack[types.ValueType], other util.Stack[types.ValueType]) error {
 	currentLen := len(current)
 	poppedLen := len(other)
 
@@ -76,7 +59,7 @@ func compareStacks(current util.Stack[ValueType], other util.Stack[ValueType]) e
 
 	for idx := range currentLen {
 		if current[idx] != other[idx] {
-			return fmt.Errorf("failed to validate stack: current[%d](%s) != popped[%d](%s) (len=%d). current=(%s) popped=(%s).", idx, ValueTypeFormat(current[idx]), idx, ValueTypeFormat(other[idx]), currentLen, typeDumpStack(current), typeDumpStack(other))
+			return fmt.Errorf("failed to validate stack: current[%d](%s) != popped[%d](%s) (len=%d). current=(%s) popped=(%s).", idx, current[idx].Format(), idx, other[idx].Format(), currentLen, typeDumpStack(current), typeDumpStack(other))
 		}
 	}
 
@@ -125,6 +108,7 @@ func typeCheck(data *TypeCheckData) error {
 		typeCheckBitwise,
 		typeCheckBoolean,
 		typeCheckTools,
+		typeCheckExtra,
 	}
 
 	for tip < data.eop {
@@ -134,6 +118,9 @@ func typeCheck(data *TypeCheckData) error {
 		if token == nil {
 			return fmt.Errorf("failed to type check. token at index %d is nil.", tip)
 		}
+
+		typecheckv("Stack[%d]: %s\n", len(data.typeStack), typeDumpStack(data.typeStack))
+		typecheckv("%d: %s\n", tip, token.Value)
 
 		subData := TypeCheckSubData{
 			data, inst, token, &tip,
@@ -150,15 +137,37 @@ func typeCheck(data *TypeCheckData) error {
 				break
 			}
 		}
+
+		p := errors.PrepareTypeCheck("call")
+		proc, ok := data.procs[token.Value]
+		if ok {
+			ins := proc.Token.Extra.Proc.In
+			outs := proc.Token.Extra.Proc.Out
+
+			if data.typeStack.Len() < len(ins) {
+				p.Stack(len(ins), data.typeStack.Len())
+			}
+
+			if err := compareStacks(data.typeStack[data.typeStack.Len()-len(ins):], ins); err != nil {
+				p.CallLeadingError(token.Value, err)
+			}
+
+			data.typeStack = data.typeStack[:data.typeStack.Len()-len(ins)]
+			data.typeStack = append(data.typeStack, outs...)
+
+			tip++
+		} else if !next {
+			errors.BadTypeCheck(token.Value, "Unknown operator.")
+		}
 	}
 
 	return nil
 }
 
-func typeDumpStack(stack util.Stack[ValueType]) string {
+func typeDumpStack(stack util.Stack[types.ValueType]) string {
 	typeStrings := make([]string, stack.Len())
 	for idx := range stack.Len() {
-		typeStrings[idx] = ValueTypeFormat(stack[idx])
+		typeStrings[idx] = stack[idx].Format()
 	}
 
 	return strings.Join(typeStrings, " ")
@@ -182,11 +191,11 @@ func typeBad(err error) (*TypeResult, error) {
 
 func typeCheckLiteral(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("", types.TokenTypeNumber) {
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("", types.TokenTypeString) {
-		d.base.typeStack.Push(ValueTypeString)
+		d.base.typeStack.Push(types.ValueTypeString)
 	} else if d.token.Equals("", types.TokenTypePath) {
-		d.base.typeStack.Push(ValueTypePath)
+		d.base.typeStack.Push(types.ValueTypePath)
 	} else {
 		return typeNext()
 	}
@@ -206,8 +215,8 @@ func typeCheckPrint(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeInt {
-			p.ExpectType(ValueTypeFormat(t1), "int")
+		if t1 != types.ValueTypeInt {
+			p.ExpectType(t1.Format(), "int")
 		}
 	} else if d.token.Equals("puts", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("puts", "Failed to print string.")
@@ -220,8 +229,8 @@ func typeCheckPrint(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeString {
-			p.ExpectType(ValueTypeFormat(t1), "string")
+		if t1 != types.ValueTypeString {
+			p.ExpectType(t1.Format(), "string")
 		}
 	} else {
 		return typeNext()
@@ -242,11 +251,11 @@ func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeString {
-			p.ExpectType(ValueTypeFormat(t1), "string")
+		if t1 != types.ValueTypeString {
+			p.ExpectType(t1.Format(), "string")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("string", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("string")
 		if d.base.typeStack.Len() < 1 {
@@ -258,12 +267,12 @@ func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 == ValueTypeString {
-			d.base.typeStack.Push(ValueTypeString)
-		} else if t1 == ValueTypeInt {
-			d.base.typeStack.Push(ValueTypeInt)
+		if t1 == types.ValueTypeString {
+			d.base.typeStack.Push(types.ValueTypeString)
+		} else if t1 == types.ValueTypeInt {
+			d.base.typeStack.Push(types.ValueTypeInt)
 		} else {
-			p.ExpectType(ValueTypeFormat(t1), "int", "string")
+			p.ExpectType(t1.Format(), "int", "string")
 		}
 	} else {
 		return typeNext()
@@ -289,15 +298,15 @@ func typeCheckMemory(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeString {
-			p.ExpectNameType("name", ValueTypeFormat(t1), "string")
+		if t1 != types.ValueTypeString {
+			p.ExpectNameType("name", t1.Format(), "string")
 		}
 
-		if t2 != ValueTypeInt {
-			p.ExpectNameType("value", ValueTypeFormat(t2), "int")
+		if t2 != types.ValueTypeInt && t2 != types.ValueTypeString {
+			p.ExpectNameType("value", t2.Format(), "int", "string")
 		}
-	} else if d.token.Equals("load", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("load")
+	} else if d.token.Equals("iload", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("iload")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -307,11 +316,27 @@ func typeCheckMemory(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetNameValue(-1, "name")
 		}
 
-		if t1 != ValueTypeString {
-			p.ExpectNameType("name", ValueTypeFormat(t1), "string")
+		if t1 != types.ValueTypeString {
+			p.ExpectNameType("name", t1.Format(), "string")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
+	} else if d.token.Equals("sload", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("sload")
+		if d.base.typeStack.Len() < 1 {
+			p.Empty()
+		}
+
+		t1, ok := d.base.typeStack.Pop()
+		if !ok {
+			p.GetNameValue(-1, "name")
+		}
+
+		if t1 != types.ValueTypeString {
+			p.ExpectNameType("name", t1.Format(), "string")
+		}
+
+		d.base.typeStack.Push(types.ValueTypeString)
 	} else {
 		return typeNext()
 	}
@@ -336,19 +361,19 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t2 == ValueTypeString {
-			if t1 == ValueTypeString {
-				d.base.typeStack.Push(ValueTypeString)
-			} else if t1 == ValueTypeInt {
-				d.base.typeStack.Push(ValueTypeString)
+		if t2 == types.ValueTypeString {
+			if t1 == types.ValueTypeString {
+				d.base.typeStack.Push(types.ValueTypeString)
+			} else if t1 == types.ValueTypeInt {
+				d.base.typeStack.Push(types.ValueTypeString)
 			} else {
-				p.With("Second value is string.").ExpectNameType("first value", ValueTypeFormat(t1), "int", "string")
+				p.With("Second value is string.").ExpectNameType("first value", t1.Format(), "int", "string")
 			}
-		} else if t2 == ValueTypeInt {
-			if t1 == ValueTypeInt {
-				d.base.typeStack.Push(ValueTypeInt)
+		} else if t2 == types.ValueTypeInt {
+			if t1 == types.ValueTypeInt {
+				d.base.typeStack.Push(types.ValueTypeInt)
 			} else {
-				p.With("Second value is int.").ExpectNameType("first value", ValueTypeFormat(t1), "int")
+				p.With("Second value is int.").ExpectNameType("first value", t1.Format(), "int")
 			}
 		} else {
 			p.GetValue(1)
@@ -369,15 +394,15 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypeInt {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "int")
+		if t1 != types.ValueTypeInt {
+			p.ExpectNameType("first value", t1.Format(), "int")
 		}
 
-		if t2 != ValueTypeInt {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
+		if t2 != types.ValueTypeInt {
+			p.ExpectNameType("second value", t2.Format(), "int")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("*", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("*")
 		if d.base.typeStack.Len() < 2 {
@@ -394,15 +419,15 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypeInt {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "int")
+		if t1 != types.ValueTypeInt {
+			p.ExpectNameType("first value", t1.Format(), "int")
 		}
 
-		if t2 != ValueTypeInt {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
+		if t2 != types.ValueTypeInt {
+			p.ExpectNameType("second value", t2.Format(), "int")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("/", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("/")
 		if d.base.typeStack.Len() < 2 {
@@ -419,15 +444,15 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypeInt {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "int")
+		if t1 != types.ValueTypeInt {
+			p.ExpectNameType("first value", t1.Format(), "int")
 		}
 
-		if t2 != ValueTypeInt {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
+		if t2 != types.ValueTypeInt {
+			p.ExpectNameType("second value", t2.Format(), "int")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("%", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("%")
 		if d.base.typeStack.Len() < 2 {
@@ -444,15 +469,15 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypeInt {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "int")
+		if t1 != types.ValueTypeInt {
+			p.ExpectNameType("first value", t1.Format(), "int")
 		}
 
-		if t2 != ValueTypeInt {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
+		if t2 != types.ValueTypeInt {
+			p.ExpectNameType("second value", t2.Format(), "int")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("++", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("++")
 		if d.base.typeStack.Len() < 1 {
@@ -464,11 +489,11 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeInt {
-			p.ExpectType(ValueTypeFormat(t1), "int")
+		if t1 != types.ValueTypeInt {
+			p.ExpectType(t1.Format(), "int")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("--", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("--")
 		if d.base.typeStack.Len() < 1 {
@@ -480,25 +505,17 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeInt {
-			p.ExpectType(ValueTypeFormat(t1), "int")
+		if t1 != types.ValueTypeInt {
+			p.ExpectType(t1.Format(), "int")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else {
 		return typeNext()
 	}
 
 	return typeOk()
 }
-
-/* For the rest of this file, looking at everything done above, replace each use of `typeBad` below with the use of `errors.PrepareTypeCheck` as seen in the full file above. Do this process one instruction at a time.
-
-Requirements:
- - Check `internal/errors/typecheck.go` in its entirety before starting.
- - Check `internal/interpreter/typechecker.go` in its entirety before starting.
- - Leave this comment intact.
- */
 
 func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("dup", types.TokenTypeKeyword) {
@@ -512,8 +529,8 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeInt && t1 != ValueTypeString && t1 != ValueTypePath {
-			p.UnexpectedType(-1, ValueTypeFormat(t1))
+		if t1 != types.ValueTypeInt && t1 != types.ValueTypeString && t1 != types.ValueTypePath {
+			p.UnexpectedType(-1, t1.Format())
 		}
 
 		d.base.typeStack.Push(t1)
@@ -544,12 +561,12 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypeInt && t1 != ValueTypeString && t1 != ValueTypePath {
-			p.UnexpectedType(0, ValueTypeFormat(t1))
+		if t1 != types.ValueTypeInt && t1 != types.ValueTypeString && t1 != types.ValueTypePath {
+			p.UnexpectedType(0, t1.Format())
 		}
 
-		if t2 != ValueTypeInt && t2 != ValueTypeString && t2 != ValueTypePath {
-			p.UnexpectedType(1, ValueTypeFormat(t2))
+		if t2 != types.ValueTypeInt && t2 != types.ValueTypeString && t2 != types.ValueTypePath {
+			p.UnexpectedType(1, t2.Format())
 		}
 
 		d.base.typeStack.Push(t1)
@@ -562,8 +579,8 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 
 		t2 := d.base.typeStack[len(d.base.typeStack)-2]
 
-		if t2 != ValueTypeInt && t2 != ValueTypeString && t2 != ValueTypePath {
-			p.UnexpectedType(1, ValueTypeFormat(t2))
+		if t2 != types.ValueTypeInt && t2 != types.ValueTypeString && t2 != types.ValueTypePath {
+			p.UnexpectedType(1, t2.Format())
 		}
 
 		d.base.typeStack.Push(t2)
@@ -576,12 +593,12 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 		t1 := d.base.typeStack[len(d.base.typeStack)-2]
 		t2 := d.base.typeStack[len(d.base.typeStack)-1]
 
-		if t1 != ValueTypeInt && t1 != ValueTypeString && t1 != ValueTypePath {
-			p.UnexpectedType(0, ValueTypeFormat(t1))
+		if t1 != types.ValueTypeInt && t1 != types.ValueTypeString && t1 != types.ValueTypePath {
+			p.UnexpectedType(0, t1.Format())
 		}
 
-		if t2 != ValueTypeInt && t2 != ValueTypeString && t2 != ValueTypePath {
-			p.UnexpectedType(1, ValueTypeFormat(t2))
+		if t2 != types.ValueTypeInt && t2 != types.ValueTypeString && t2 != types.ValueTypePath {
+			p.UnexpectedType(1, t2.Format())
 		}
 
 		d.base.typeStack.Push(t1)
@@ -612,20 +629,20 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(3)
 		}
 
-		if t1 != ValueTypeInt && t1 != ValueTypeString && t1 != ValueTypePath {
-			p.UnexpectedType(0, ValueTypeFormat(t1))
+		if t1 != types.ValueTypeInt && t1 != types.ValueTypeString && t1 != types.ValueTypePath {
+			p.UnexpectedType(0, t1.Format())
 		}
 
-		if t2 != ValueTypeInt && t2 != ValueTypeString && t2 != ValueTypePath {
-			p.UnexpectedType(1, ValueTypeFormat(t2))
+		if t2 != types.ValueTypeInt && t2 != types.ValueTypeString && t2 != types.ValueTypePath {
+			p.UnexpectedType(1, t2.Format())
 		}
 
-		if t3 != ValueTypeInt && t3 != ValueTypeString && t3 != ValueTypePath {
-			p.UnexpectedType(2, ValueTypeFormat(t3))
+		if t3 != types.ValueTypeInt && t3 != types.ValueTypeString && t3 != types.ValueTypePath {
+			p.UnexpectedType(2, t3.Format())
 		}
 
-		if t4 != ValueTypeInt && t4 != ValueTypeString && t4 != ValueTypePath {
-			p.UnexpectedType(3, ValueTypeFormat(t4))
+		if t4 != types.ValueTypeInt && t4 != types.ValueTypeString && t4 != types.ValueTypePath {
+			p.UnexpectedType(3, t4.Format())
 		}
 
 		d.base.typeStack.Push(t2)
@@ -641,8 +658,28 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 
 func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("if", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("if")
+		if d.base.typeStack.Len() < 1 {
+			p.Empty()
+		}
+
+		_, ok := d.base.typeStack.Pop()
+		if !ok {
+			p.GetValue(0)
+		}
+
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("unless", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("unless")
+		if d.base.typeStack.Len() < 1 {
+			p.Empty()
+		}
+
+		_, ok := d.base.typeStack.Pop()
+		if !ok {
+			p.GetValue(0)
+		}
+
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("else", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("else")
@@ -708,6 +745,19 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 			if err := compareStacks(d.base.typeStack, preview.stack); err != nil {
 				p.ConnectedTokenError("do", err)
 			}
+		} else if preview.cause.Token.Equals("proc", types.TokenTypeKeyword) {
+			out := preview.cause.Token.Extra.Proc.Out
+			if d.base.typeStack.Len() < len(out) {
+				p.Stack(len(out), d.base.typeStack.Len())
+			}
+
+			if err := compareStacks(d.base.typeStack[d.base.typeStack.Len()-len(out):], out); err != nil {
+				p.ConnectedTokenError("proc", err)
+			}
+
+			d.base.typeStack = d.base.typeStack[:d.base.typeStack.Len()-len(out)]
+
+			typecheckv("Exit proc %s\n", preview.cause.Token.Extra.Proc.Name)
 		} else {
 			p.Throw(fmt.Sprintf("Connected keyword '%s' is not implemented.", preview.cause.Token.Value))
 		}
@@ -717,12 +767,17 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("proc", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("proc")
+		pushStack(d.base, d.inst)
+
+		for _, inType := range d.inst.Token.Extra.Proc.In {
+			d.base.typeStack.Push(inType)
+		}
+
 		if d.inst.Next == -1 {
 			p.Throw("Skip is undefined.")
 		}
 
-		(*d.tip) = int(d.inst.Next)
-		return typeSkip()
+		typecheckv("Enter proc %s\n", d.token.Extra.Proc.Name)
 	} else if d.token.Equals("ret", types.TokenTypeKeyword) {
 		errors.BadTypeCheck("ret", "Not implemented.")
 	} else if d.token.Equals("dret", types.TokenTypeKeyword) {
@@ -753,7 +808,7 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("!=", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("!=")
 		if d.base.typeStack.Len() < 2 {
@@ -770,7 +825,7 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("<", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("<")
 		if d.base.typeStack.Len() < 2 {
@@ -787,17 +842,17 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 == ValueTypeString {
-			if t2 != ValueTypeString {
-				p.With(fmt.Sprintf("Cannot compare string and %s.", ValueTypeFormat(t2))).Throw()
+		if t1 == types.ValueTypeString {
+			if t2 != types.ValueTypeString {
+				p.With(fmt.Sprintf("Cannot compare string and %s.", t2.Format())).Throw()
 			}
-		} else if t1 == ValueTypeInt {
-			if t2 != ValueTypeInt {
-				p.With(fmt.Sprintf("Cannot compare int and %s.", ValueTypeFormat(t2))).Throw()
+		} else if t1 == types.ValueTypeInt {
+			if t2 != types.ValueTypeInt {
+				p.With(fmt.Sprintf("Cannot compare int and %s.", t2.Format())).Throw()
 			}
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals(">", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck(">")
 		if d.base.typeStack.Len() < 2 {
@@ -814,17 +869,17 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 == ValueTypeString {
-			if t2 != ValueTypeString {
-				p.With(fmt.Sprintf("Cannot compare string and %s.", ValueTypeFormat(t2))).Throw()
+		if t1 == types.ValueTypeString {
+			if t2 != types.ValueTypeString {
+				p.With(fmt.Sprintf("Cannot compare string and %s.", t2.Format())).Throw()
 			}
-		} else if t1 == ValueTypeInt {
-			if t2 != ValueTypeInt {
-				p.With(fmt.Sprintf("Cannot compare int and %s.", ValueTypeFormat(t2))).Throw()
+		} else if t1 == types.ValueTypeInt {
+			if t2 != types.ValueTypeInt {
+				p.With(fmt.Sprintf("Cannot compare int and %s.", t2.Format())).Throw()
 			}
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("<=", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("<=")
 		if d.base.typeStack.Len() < 2 {
@@ -841,17 +896,17 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 == ValueTypeString {
-			if t2 != ValueTypeString {
-				p.With(fmt.Sprintf("Cannot compare string and %s.", ValueTypeFormat(t2))).Throw()
+		if t1 == types.ValueTypeString {
+			if t2 != types.ValueTypeString {
+				p.With(fmt.Sprintf("Cannot compare string and %s.", t2.Format())).Throw()
 			}
-		} else if t1 == ValueTypeInt {
-			if t2 != ValueTypeInt {
-				p.With(fmt.Sprintf("Cannot compare int and %s.", ValueTypeFormat(t2))).Throw()
+		} else if t1 == types.ValueTypeInt {
+			if t2 != types.ValueTypeInt {
+				p.With(fmt.Sprintf("Cannot compare int and %s.", t2.Format())).Throw()
 			}
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals(">=", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck(">=")
 		if d.base.typeStack.Len() < 2 {
@@ -868,17 +923,17 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 == ValueTypeString {
-			if t2 != ValueTypeString {
-				p.With(fmt.Sprintf("Cannot compare string and %s.", ValueTypeFormat(t2))).Throw()
+		if t1 == types.ValueTypeString {
+			if t2 != types.ValueTypeString {
+				p.With(fmt.Sprintf("Cannot compare string and %s.", t2.Format())).Throw()
 			}
-		} else if t1 == ValueTypeInt {
-			if t2 != ValueTypeInt {
-				p.With(fmt.Sprintf("Cannot compare int and %s.", ValueTypeFormat(t2))).Throw()
+		} else if t1 == types.ValueTypeInt {
+			if t2 != types.ValueTypeInt {
+				p.With(fmt.Sprintf("Cannot compare int and %s.", t2.Format())).Throw()
 			}
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("!", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("!")
 		if d.base.typeStack.Len() < 1 {
@@ -890,7 +945,7 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else {
 		return typeNext()
 	}
@@ -910,11 +965,11 @@ func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeInt {
-			p.ExpectType(ValueTypeFormat(t1), "int")
+		if t1 != types.ValueTypeInt {
+			p.ExpectType(t1.Format(), "int")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("&", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("&")
 		if d.base.typeStack.Len() < 2 {
@@ -931,11 +986,11 @@ func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypeInt || t2 != ValueTypeInt {
-			p.With(fmt.Sprintf("2 int values expected, got %s and %s.", ValueTypeFormat(t1), ValueTypeFormat(t2))).Throw()
+		if t1 != types.ValueTypeInt || t2 != types.ValueTypeInt {
+			p.With(fmt.Sprintf("2 int values expected, got %s and %s.", t1.Format(), t2.Format())).Throw()
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("|", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("|")
 		if d.base.typeStack.Len() < 2 {
@@ -952,11 +1007,11 @@ func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypeInt || t2 != ValueTypeInt {
-			p.With(fmt.Sprintf("2 int values expected, got %s and %s.", ValueTypeFormat(t1), ValueTypeFormat(t2))).Throw()
+		if t1 != types.ValueTypeInt || t2 != types.ValueTypeInt {
+			p.With(fmt.Sprintf("2 int values expected, got %s and %s.", t1.Format(), t2.Format())).Throw()
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("^", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("^")
 		if d.base.typeStack.Len() < 2 {
@@ -973,11 +1028,11 @@ func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypeInt || t2 != ValueTypeInt {
-			p.With(fmt.Sprintf("2 int values expected, got %s and %s.", ValueTypeFormat(t1), ValueTypeFormat(t2))).Throw()
+		if t1 != types.ValueTypeInt || t2 != types.ValueTypeInt {
+			p.With(fmt.Sprintf("2 int values expected, got %s and %s.", t1.Format(), t2.Format())).Throw()
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else {
 		return typeNext()
 	}
@@ -1002,7 +1057,7 @@ func typeCheckBoolean(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("||", types.TokenTypeSymbol) {
 		p := errors.PrepareTypeCheck("||")
 		if d.base.typeStack.Len() < 2 {
@@ -1019,7 +1074,7 @@ func typeCheckBoolean(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else {
 		return typeNext()
 	}
@@ -1044,15 +1099,15 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectNameType("first value", t1.Format(), "path")
 		}
 
-		if t2 != ValueTypeString {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "string")
+		if t2 != types.ValueTypeString {
+			p.ExpectNameType("second value", t2.Format(), "string")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("readfile", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("readfile")
 		if d.base.typeStack.Len() < 1 {
@@ -1064,12 +1119,12 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectType(ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectType(t1.Format(), "path")
 		}
 
-		d.base.typeStack.Push(ValueTypeString)
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeString)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("copy", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("copy")
 		if d.base.typeStack.Len() < 2 {
@@ -1086,16 +1141,16 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectNameType("first value", t1.Format(), "path")
 		}
 
-		if t2 != ValueTypePath {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "path")
+		if t2 != types.ValueTypePath {
+			p.ExpectNameType("second value", t2.Format(), "path")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("exist", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("exist")
 		if d.base.typeStack.Len() < 1 {
@@ -1107,11 +1162,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectType(ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectType(t1.Format(), "path")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("touch", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("touch")
 		if d.base.typeStack.Len() < 1 {
@@ -1123,11 +1178,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectType(ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectType(t1.Format(), "path")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("mkdir", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("mkdir")
 		if d.base.typeStack.Len() < 1 {
@@ -1139,11 +1194,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectType(ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectType(t1.Format(), "path")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("rm", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("rm")
 		if d.base.typeStack.Len() < 1 {
@@ -1155,11 +1210,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectType(ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectType(t1.Format(), "path")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("unzip", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("unzip")
 		if d.base.typeStack.Len() < 2 {
@@ -1176,16 +1231,16 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectNameType("first value", t1.Format(), "path")
 		}
 
-		if t2 != ValueTypePath {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "path")
+		if t2 != types.ValueTypePath {
+			p.ExpectNameType("second value", t2.Format(), "path")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("lsf", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("lsf")
 		if d.base.typeStack.Len() < 1 {
@@ -1197,11 +1252,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectType(ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectType(t1.Format(), "path")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("getf", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("getf")
 		if d.base.typeStack.Len() < 2 {
@@ -1218,15 +1273,15 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectNameType("first value", t1.Format(), "path")
 		}
 
-		if t2 != ValueTypeInt {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
+		if t2 != types.ValueTypeInt {
+			p.ExpectNameType("second value", t2.Format(), "int")
 		}
 
-		d.base.typeStack.Push(ValueTypeString)
+		d.base.typeStack.Push(types.ValueTypeString)
 	} else if d.token.Equals("lsd", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("lsd")
 		if d.base.typeStack.Len() < 1 {
@@ -1238,11 +1293,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectType(ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectType(t1.Format(), "path")
 		}
 
-		d.base.typeStack.Push(ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("getd", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("getd")
 		if d.base.typeStack.Len() < 2 {
@@ -1259,15 +1314,15 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypePath {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
+		if t1 != types.ValueTypePath {
+			p.ExpectNameType("first value", t1.Format(), "path")
 		}
 
-		if t2 != ValueTypeInt {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
+		if t2 != types.ValueTypeInt {
+			p.ExpectNameType("second value", t2.Format(), "int")
 		}
 
-		d.base.typeStack.Push(ValueTypeString)
+		d.base.typeStack.Push(types.ValueTypeString)
 	} else if d.token.Equals("concat", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("concat")
 		if d.base.typeStack.Len() < 2 {
@@ -1284,12 +1339,12 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 
-		if t1 != ValueTypeString {
-			p.ExpectNameType("first value", ValueTypeFormat(t1), "string")
+		if t1 != types.ValueTypeString {
+			p.ExpectNameType("first value", t1.Format(), "string")
 		}
 
-		if t2 != ValueTypeString && t2 != ValueTypePath {
-			p.ExpectNameType("second value", ValueTypeFormat(t2), "string", "path")
+		if t2 != types.ValueTypeString && t2 != types.ValueTypePath {
+			p.ExpectNameType("second value", t2.Format(), "string", "path")
 		}
 
 		d.base.typeStack.Push(t2)
@@ -1304,11 +1359,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypePath && t1 != ValueTypeInt && t1 != ValueTypeString {
-			p.ExpectType(ValueTypeFormat(t1), "path", "int", "string")
+		if t1 != types.ValueTypePath && t1 != types.ValueTypeInt && t1 != types.ValueTypeString {
+			p.ExpectType(t1.Format(), "path", "int", "string")
 		}
 
-		d.base.typeStack.Push(ValueTypeString)
+		d.base.typeStack.Push(types.ValueTypeString)
 	} else if d.token.Equals("token", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("token")
 		if d.base.typeStack.Len() < 1 {
@@ -1320,11 +1375,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeString {
-			p.ExpectType(ValueTypeFormat(t1), "string")
+		if t1 != types.ValueTypeString {
+			p.ExpectType(t1.Format(), "string")
 		}
 
-		d.base.typeStack.Push(ValueTypePath)
+		d.base.typeStack.Push(types.ValueTypePath)
 	} else if d.token.Equals("absolute", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("absolute")
 		if d.base.typeStack.Len() < 1 {
@@ -1336,11 +1391,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeString {
-			p.ExpectType(ValueTypeFormat(t1), "string")
+		if t1 != types.ValueTypeString {
+			p.ExpectType(t1.Format(), "string")
 		}
 
-		d.base.typeStack.Push(ValueTypePath)
+		d.base.typeStack.Push(types.ValueTypePath)
 	} else if d.token.Equals("relative", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck("relative")
 		if d.base.typeStack.Len() < 1 {
@@ -1352,11 +1407,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 
-		if t1 != ValueTypeString {
-			p.ExpectType(ValueTypeFormat(t1), "string")
+		if t1 != types.ValueTypeString {
+			p.ExpectType(t1.Format(), "string")
 		}
 
-		d.base.typeStack.Push(ValueTypePath)
+		d.base.typeStack.Push(types.ValueTypePath)
 	} else {
 		return typeNext()
 	}
@@ -1364,12 +1419,11 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 	return typeOk()
 }
 
-/*
-func typeCheck(d *TypeCheckSubData) (*TypeResult, error) {
+func typeCheckExtra(d *TypeCheckSubData) (*TypeResult, error) {
+	if d.token.Equals("exit", types.TokenTypeKeyword) {
 	} else {
 		return typeNext()
 	}
 
 	return typeOk()
 }
-*/
