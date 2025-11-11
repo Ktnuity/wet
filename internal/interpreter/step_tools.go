@@ -147,21 +147,13 @@ func (ip *Interpreter) StepTools(d *StepData) *StepResult {
 		if err != nil {
 			ip.runtimev("failed to use copy tool: %v\n", err)
 			if occupied {
-				// File already exists: push true false
-				err = ip.ipush(1)
-				if err != nil {
-					return StepBad(fmt.Errorf("failed to run step. copy command failed. failure pushing value: %v", err))
-				}
+				// File already exists: push false
 				err = ip.ipush(0)
 				if err != nil {
 					return StepBad(fmt.Errorf("failed to run step. copy command failed. failure pushing value: %v", err))
 				}
 			} else {
-				// Other failure: push false false
-				err = ip.ipush(0)
-				if err != nil {
-					return StepBad(fmt.Errorf("failed to run step. copy command failed. failure pushing value: %v", err))
-				}
+				// Other failure: push false
 				err = ip.ipush(0)
 				if err != nil {
 					return StepBad(fmt.Errorf("failed to run step. copy command failed. failure pushing value: %v", err))
@@ -311,6 +303,10 @@ func (ip *Interpreter) StepTools(d *StepData) *StepResult {
 		result, err := tools.ToolUnzipFile(pDst, pRes)
 		if err != nil {
 			ip.runtimev("failed to use unzip tool: %v\n", err)
+			err = ip.ipush(-1)
+			if err != nil {
+				return StepBad(fmt.Errorf("failed to run step. unzip command failed. failure pushing error value: %v", err))
+			}
 			err = ip.ipush(-1)
 			if err != nil {
 				return StepBad(fmt.Errorf("failed to run step. unzip command failed. failure pushing error value: %v", err))

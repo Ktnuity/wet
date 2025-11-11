@@ -72,4 +72,3 @@ end drop
     ++
 end drop
 "total: " swap + "\n" concat puts
-

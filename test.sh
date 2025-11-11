@@ -4,6 +4,9 @@ set -e
 
 ./build.sh
 
+echo "[=] Type Checker"
+./wet ./demo/typecheck/init.wet
+
 echo "[=] Arithmetics"
 ./wet ./demo/arithmetics/init.wet
 

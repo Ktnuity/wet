@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ktnuity/wet/internal/errors"
 	"github.com/ktnuity/wet/internal/types"
 	"github.com/ktnuity/wet/internal/util"
 )
@@ -195,30 +196,32 @@ func typeCheckLiteral(d *TypeCheckSubData) (*TypeResult, error) {
 
 func typeCheckPrint(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals(".", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck(".", "Failed to print int.")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf(". operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf(". operator failed. failed to get value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeInt {
-			return typeBad(fmt.Errorf(". operator failed. expected int, got: %s", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "int")
 		}
 	} else if d.token.Equals("puts", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("puts", "Failed to print string.")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("puts operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("puts operator failed. failed to get value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeString {
-			return typeBad(fmt.Errorf("puts operator failed. expected string, got: %s", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "string")
 		}
 	} else {
 		return typeNext()
@@ -229,28 +232,30 @@ func typeCheckPrint(d *TypeCheckSubData) (*TypeResult, error) {
 
 func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("int", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("int")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("int operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("int operator failed. failed to get value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeString {
-			return typeBad(fmt.Errorf("int operator failed. expected string, got: %s", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "string")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("string", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("string")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("string operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("string operator failed. failed to get value."))
+			p.GetValue(-1)
 		}
 
 		if t1 == ValueTypeString {
@@ -258,7 +263,7 @@ func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
 		} else if t1 == ValueTypeInt {
 			d.base.typeStack.Push(ValueTypeInt)
 		} else {
-			return typeBad(fmt.Errorf("string operator failed. expected int or string, got: %s", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "int", "string")
 		}
 	} else {
 		return typeNext()
@@ -269,39 +274,41 @@ func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
 
 func typeCheckMemory(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("store", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("store")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("store operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("store operator failed. failed to get name."))
+			p.GetNameValue(-1, "name")
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("store operator failed. failed to get value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeString {
-			return typeBad(fmt.Errorf("store operator failed. expected string name, got: %s", ValueTypeFormat(t1)))
+			p.ExpectNameType("name", ValueTypeFormat(t1), "string")
 		}
 
 		if t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("store operator failed. expected int value, got: %s", ValueTypeFormat(t2)))
+			p.ExpectNameType("value", ValueTypeFormat(t2), "int")
 		}
 	} else if d.token.Equals("load", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("load")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("load operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("load operator failed. failed to get name."))
+			p.GetNameValue(-1, "name")
 		}
 
 		if t1 != ValueTypeString {
-			return typeBad(fmt.Errorf("load operator failed. expected name string, got: %s", ValueTypeFormat(t1)))
+			p.ExpectNameType("name", ValueTypeFormat(t1), "string")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
@@ -314,18 +321,19 @@ func typeCheckMemory(d *TypeCheckSubData) (*TypeResult, error) {
 
 func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("+", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("+")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("+ operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("+ operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("+ operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t2 == ValueTypeString {
@@ -334,140 +342,146 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 			} else if t1 == ValueTypeInt {
 				d.base.typeStack.Push(ValueTypeString)
 			} else {
-				return typeBad(fmt.Errorf("+ operator failed. second value is string, expected first value int or string, got: %s.", ValueTypeFormat(t1)))
+				p.With("Second value is string.").ExpectNameType("first value", ValueTypeFormat(t1), "int", "string")
 			}
 		} else if t2 == ValueTypeInt {
 			if t1 == ValueTypeInt {
 				d.base.typeStack.Push(ValueTypeInt)
 			} else {
-				return typeBad(fmt.Errorf("+ operator failed. second value is int, expected first value int, got: %s.", ValueTypeFormat(t1)))
+				p.With("Second value is int.").ExpectNameType("first value", ValueTypeFormat(t1), "int")
 			}
 		} else {
-			return typeBad(fmt.Errorf("+ operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 	} else if d.token.Equals("-", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("-")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("- operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("- operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("- operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypeInt {
-			return typeBad(fmt.Errorf("- operator failed. expected int first value, got: %s", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "int")
 		}
 
 		if t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("- operator failed. expected int second value, got: %s", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("*", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("*")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("* operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("* operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("* operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypeInt {
-			return typeBad(fmt.Errorf("* operator failed. expected int first value, got: %s", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "int")
 		}
 
 		if t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("* operator failed. expected int second value, got: %s", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("/", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("/")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("/ operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("/ operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("/ operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypeInt {
-			return typeBad(fmt.Errorf("/ operator failed. expected int first value, got: %s", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "int")
 		}
 
 		if t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("/ operator failed. expected int second value, got: %s", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("%", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("%")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("modulo operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("modulo operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("modulo operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypeInt {
-			return typeBad(fmt.Errorf("modulo operator failed. expected int first value, got: %s", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "int")
 		}
 
 		if t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("modulo operator failed. expected int second value, got: %s", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("++", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("++")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("++ operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("++ operator failed. failed to get value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeInt {
-			return typeBad(fmt.Errorf("++ operator failed. expected int value, got: %s", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "int")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("--", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("--")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("-- operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("-- operator failed. failed to get value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeInt {
-			return typeBad(fmt.Errorf("-- operator failed. expected int value, got: %s", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "int")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
@@ -478,126 +492,140 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 	return typeOk()
 }
 
+/* For the rest of this file, looking at everything done above, replace each use of `typeBad` below with the use of `errors.PrepareTypeCheck` as seen in the full file above. Do this process one instruction at a time.
+
+Requirements:
+ - Check `internal/errors/typecheck.go` in its entirety before starting.
+ - Check `internal/interpreter/typechecker.go` in its entirety before starting.
+ - Leave this comment intact.
+ */
+
 func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("dup", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("dup")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("dup operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("dup operator failed. failed to get value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeInt && t1 != ValueTypeString && t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("dup operator failed. unexpected type: %s", ValueTypeFormat(t1)))
+			p.UnexpectedType(-1, ValueTypeFormat(t1))
 		}
 
 		d.base.typeStack.Push(t1)
 		d.base.typeStack.Push(t1)
 	} else if d.token.Equals("drop", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("drop")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("dup operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		_, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("dup operator failed. failed to get value."))
+			p.GetValue(-1)
 		}
 	} else if d.token.Equals("swap", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("swap")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("swap operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("swap operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("swap operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypeInt && t1 != ValueTypeString && t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("swap operator failed. unexpected first type: %s", ValueTypeFormat(t1)))
+			p.UnexpectedType(0, ValueTypeFormat(t1))
 		}
 
 		if t2 != ValueTypeInt && t2 != ValueTypeString && t2 != ValueTypePath {
-			return typeBad(fmt.Errorf("swap operator failed. unexpected second type: %s", ValueTypeFormat(t1)))
+			p.UnexpectedType(1, ValueTypeFormat(t2))
 		}
 
 		d.base.typeStack.Push(t1)
 		d.base.typeStack.Push(t2)
 	} else if d.token.Equals("over", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("over")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("over operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t2 := d.base.typeStack[len(d.base.typeStack)-2]
 
 		if t2 != ValueTypeInt && t2 != ValueTypeString && t2 != ValueTypePath {
-			return typeBad(fmt.Errorf("over operator failed. unexpected second type: %s", ValueTypeFormat(t2)))
+			p.UnexpectedType(1, ValueTypeFormat(t2))
 		}
 
 		d.base.typeStack.Push(t2)
 	} else if d.token.Equals("2dup", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("2dup")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("2dup operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1 := d.base.typeStack[len(d.base.typeStack)-2]
 		t2 := d.base.typeStack[len(d.base.typeStack)-1]
 
 		if t1 != ValueTypeInt && t1 != ValueTypeString && t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("2dup operator failed. unexpected first type: %s", ValueTypeFormat(t1)))
+			p.UnexpectedType(0, ValueTypeFormat(t1))
 		}
 
 		if t2 != ValueTypeInt && t2 != ValueTypeString && t2 != ValueTypePath {
-			return typeBad(fmt.Errorf("2dup operator failed. unexpected second type: %s", ValueTypeFormat(t1)))
+			p.UnexpectedType(1, ValueTypeFormat(t2))
 		}
 
 		d.base.typeStack.Push(t1)
 		d.base.typeStack.Push(t2)
 	} else if d.token.Equals("2swap", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("2swap")
 		if d.base.typeStack.Len() < 4 {
-			return typeBad(fmt.Errorf("swap operator failed. stack size is %d. 4 is requied.", d.base.typeStack.Len()))
+			p.Stack(4, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("swap operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("swap operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		t3, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("swap operator failed. failed to get third value."))
+			p.GetValue(2)
 		}
 
 		t4, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("swap operator failed. failed to get fourth value."))
+			p.GetValue(3)
 		}
 
 		if t1 != ValueTypeInt && t1 != ValueTypeString && t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("swap operator failed. unexpected first type: %s", ValueTypeFormat(t1)))
+			p.UnexpectedType(0, ValueTypeFormat(t1))
 		}
 
 		if t2 != ValueTypeInt && t2 != ValueTypeString && t2 != ValueTypePath {
-			return typeBad(fmt.Errorf("swap operator failed. unexpected second type: %s", ValueTypeFormat(t2)))
+			p.UnexpectedType(1, ValueTypeFormat(t2))
 		}
 
 		if t3 != ValueTypeInt && t3 != ValueTypeString && t3 != ValueTypePath {
-			return typeBad(fmt.Errorf("swap operator failed. unexpected third type: %s", ValueTypeFormat(t3)))
+			p.UnexpectedType(2, ValueTypeFormat(t3))
 		}
 
 		if t4 != ValueTypeInt && t4 != ValueTypeString && t4 != ValueTypePath {
-			return typeBad(fmt.Errorf("swap operator failed. unexpected fourth type: %s", ValueTypeFormat(t4)))
+			p.UnexpectedType(3, ValueTypeFormat(t4))
 		}
 
 		d.base.typeStack.Push(t2)
@@ -614,21 +642,21 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("if", types.TokenTypeKeyword) {
 		pushStack(d.base, d.inst)
-		//return typeBad(fmt.Errorf("if operator failed. not implemented."))
 	} else if d.token.Equals("unless", types.TokenTypeKeyword) {
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("else", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("else")
 		preview := popStack(d.base)
 		if preview == nil {
-			return typeBad(fmt.Errorf("else operator failed. no pushed stack."))
+			p.Throw("No neighbor stack found.")
 		}
 
 		if preview.cause == nil || preview.cause.Token == nil {
-			return typeBad(fmt.Errorf("else operator failed. no cause."))
+			p.Throw("No connected keyword found.")
 		}
 
 		if !preview.cause.Token.Equals("if", types.TokenTypeKeyword) && !preview.cause.Token.Equals("unless", types.TokenTypeKeyword) {
-			return typeBad(fmt.Errorf("else operator failed. if or unless cause expected, got %s.", preview.cause.Token.Value))
+			p.ExpectNameType("cause", preview.cause.Token.Value, "if", "unless")
 		}
 
 		d.base.typeStackStack.Push(StackPreview{
@@ -638,69 +666,69 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack = preview.stack.Clone()
 	} else if d.token.Equals("do", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("do")
 		preview := popStack(d.base)
 		if preview == nil {
-			return typeBad(fmt.Errorf("do operator failed. no pushed stack."))
+			p.Throw("No neighbor stack found.")
 		}
 
 		if preview.cause == nil || preview.cause.Token == nil {
-			return typeBad(fmt.Errorf("do operator failed. no cause."))
+			p.Throw("No connected keyword found.")
 		}
 
 		if !preview.cause.Token.Equals("while", types.TokenTypeKeyword) && !preview.cause.Token.Equals("until", types.TokenTypeKeyword) {
-			return typeBad(fmt.Errorf("do operator failed. while or until cause expected, got %s.", preview.cause.Token.Value))
+			p.ExpectNameType("cause", preview.cause.Token.Value, "while", "until")
 		}
 
 		pushStack(d.base, d.inst)
-		//return typeBad(fmt.Errorf("do operator failed. not implemented."))
 	} else if d.token.Equals("end", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("end")
 		preview := popStack(d.base)
 		if preview == nil {
-			return typeBad(fmt.Errorf("end operator failed. no pushed stack."))
+			p.Throw("No neighbor stack found.")
 		}
 
 		if preview.cause == nil || preview.cause.Token == nil {
-			return typeBad(fmt.Errorf("end operator failed. no cause."))
+			p.Throw("No connected keyword found.")
 		}
 
 		if preview.cause.Token.Equals("if", types.TokenTypeKeyword) {
 			if err := compareStacks(d.base.typeStack, preview.stack); err != nil {
-				return typeBad(fmt.Errorf("end operator failed for if cause: %w", err))
+				p.ConnectedTokenError("if", err)
 			}
 		} else if preview.cause.Token.Equals("unless", types.TokenTypeKeyword) {
 			if err := compareStacks(d.base.typeStack, preview.stack); err != nil {
-				return typeBad(fmt.Errorf("end operator failed for unless cause: %w", err))
+				p.ConnectedTokenError("unless", err)
 			}
 		} else if preview.cause.Token.Equals("else", types.TokenTypeKeyword) {
 			if err := compareStacks(d.base.typeStack, preview.stack); err != nil {
-				return typeBad(fmt.Errorf("end operator failed for else cause: %w", err))
+				p.ConnectedTokenError("else", err)
 			}
 		} else if preview.cause.Token.Equals("do", types.TokenTypeKeyword) {
 			if err := compareStacks(d.base.typeStack, preview.stack); err != nil {
-				return typeBad(fmt.Errorf("end operator failed for do cause: %w", err))
+				p.ConnectedTokenError("do", err)
 			}
 		} else {
-			return typeBad(fmt.Errorf("end operator failed. %s cause not implemented.", preview.cause.Token.Value))
+			p.Throw(fmt.Sprintf("Connected keyword '%s' is not implemented.", preview.cause.Token.Value))
 		}
 	} else if d.token.Equals("while", types.TokenTypeKeyword) {
 		pushStack(d.base, d.inst)
-		//return typeBad(fmt.Errorf("while operator failed. not implemented."))
 	} else if d.token.Equals("until", types.TokenTypeKeyword) {
 		pushStack(d.base, d.inst)
-		//return typeBad(fmt.Errorf("until operator failed. not implemented."))
 	} else if d.token.Equals("proc", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("proc")
 		if d.inst.Next == -1 {
-			return typeBad(fmt.Errorf("proc operator failed. skip is undefined.\n"))
+			p.Throw("Skip is undefined.")
 		}
 
 		(*d.tip) = int(d.inst.Next)
 		return typeSkip()
 	} else if d.token.Equals("ret", types.TokenTypeKeyword) {
-		return typeBad(fmt.Errorf("ret operator failed. not implemented."))
+		errors.BadTypeCheck("ret", "Not implemented.")
 	} else if d.token.Equals("dret", types.TokenTypeKeyword) {
-		return typeBad(fmt.Errorf("dret operator failed. not implemented."))
+		errors.BadTypeCheck("dret", "Not implemented.")
 	} else if d.token.Equals("iret", types.TokenTypeKeyword) {
-		return typeBad(fmt.Errorf("iret operator failed. not implemented."))
+		errors.BadTypeCheck("iret", "Not implemented.")
 	} else {
 		return typeNext()
 	}
@@ -710,149 +738,156 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 
 func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("=", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("=")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("= operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		_, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("= operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		_, ok = d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("= operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("!=", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("!=")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("!= operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		_, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("!= operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		_, ok = d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("!= operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("<", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("<")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("< operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("< operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("< operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 == ValueTypeString {
 			if t2 != ValueTypeString {
-				return typeBad(fmt.Errorf("< operator failed. cannot compare string and %s.", ValueTypeFormat(t2)))
+				p.With(fmt.Sprintf("Cannot compare string and %s.", ValueTypeFormat(t2))).Throw()
 			}
 		} else if t1 == ValueTypeInt {
 			if t2 != ValueTypeInt {
-				return typeBad(fmt.Errorf("< operator failed. cannot compare int and %s.", ValueTypeFormat(t2)))
+				p.With(fmt.Sprintf("Cannot compare int and %s.", ValueTypeFormat(t2))).Throw()
 			}
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals(">", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck(">")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("> operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("> operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("> operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 == ValueTypeString {
 			if t2 != ValueTypeString {
-				return typeBad(fmt.Errorf("> operator failed. cannot compare string and %s.", ValueTypeFormat(t2)))
+				p.With(fmt.Sprintf("Cannot compare string and %s.", ValueTypeFormat(t2))).Throw()
 			}
 		} else if t1 == ValueTypeInt {
 			if t2 != ValueTypeInt {
-				return typeBad(fmt.Errorf("> operator failed. cannot compare int and %s.", ValueTypeFormat(t2)))
+				p.With(fmt.Sprintf("Cannot compare int and %s.", ValueTypeFormat(t2))).Throw()
 			}
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("<=", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("<=")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("<= operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("<= operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("<= operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 == ValueTypeString {
 			if t2 != ValueTypeString {
-				return typeBad(fmt.Errorf("<= operator failed. cannot compare string and %s.", ValueTypeFormat(t2)))
+				p.With(fmt.Sprintf("Cannot compare string and %s.", ValueTypeFormat(t2))).Throw()
 			}
 		} else if t1 == ValueTypeInt {
 			if t2 != ValueTypeInt {
-				return typeBad(fmt.Errorf("<= operator failed. cannot compare int and %s.", ValueTypeFormat(t2)))
+				p.With(fmt.Sprintf("Cannot compare int and %s.", ValueTypeFormat(t2))).Throw()
 			}
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals(">=", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck(">=")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf(">= operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf(">= operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf(">= operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 == ValueTypeString {
 			if t2 != ValueTypeString {
-				return typeBad(fmt.Errorf(">= operator failed. cannot compare string and %s.", ValueTypeFormat(t2)))
+				p.With(fmt.Sprintf("Cannot compare string and %s.", ValueTypeFormat(t2))).Throw()
 			}
 		} else if t1 == ValueTypeInt {
 			if t2 != ValueTypeInt {
-				return typeBad(fmt.Errorf(">= operator failed. cannot compare int and %s.", ValueTypeFormat(t2)))
+				p.With(fmt.Sprintf("Cannot compare int and %s.", ValueTypeFormat(t2))).Throw()
 			}
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("!", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("!")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("! operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		_, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("! operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
@@ -865,77 +900,81 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 
 func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("~", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("~")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("~ operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("~ operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeInt {
-			return typeBad(fmt.Errorf("~ operator failed. expected int, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "int")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("&", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("&")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("& operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("& operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("& operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypeInt || t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("& operator failed. 2 int values expected, got %s and %s.", ValueTypeFormat(t1), ValueTypeFormat(t2)))
+			p.With(fmt.Sprintf("2 int values expected, got %s and %s.", ValueTypeFormat(t1), ValueTypeFormat(t2))).Throw()
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("|", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("|")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("| operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("| operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("| operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypeInt || t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("| operator failed. 2 int values expected, got %s and %s.", ValueTypeFormat(t1), ValueTypeFormat(t2)))
+			p.With(fmt.Sprintf("2 int values expected, got %s and %s.", ValueTypeFormat(t1), ValueTypeFormat(t2))).Throw()
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("^", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("^")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("^ operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("^ operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("^ operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypeInt || t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("^ operator failed. 2 int values expected, got %s and %s.", ValueTypeFormat(t1), ValueTypeFormat(t2)))
+			p.With(fmt.Sprintf("2 int values expected, got %s and %s.", ValueTypeFormat(t1), ValueTypeFormat(t2))).Throw()
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
@@ -948,34 +987,36 @@ func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 
 func typeCheckBoolean(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("&&", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("&&")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("& operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		_, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("& operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		_, ok = d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("& operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("||", types.TokenTypeSymbol) {
+		p := errors.PrepareTypeCheck("||")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("& operator failed. stack size is %d. 2 is requied.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		_, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("& operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		_, ok = d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("& operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
@@ -988,314 +1029,331 @@ func typeCheckBoolean(d *TypeCheckSubData) (*TypeResult, error) {
 
 func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 	if d.token.Equals("download", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("download")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("download operator failed. stack size is %d. 2 is required.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("download operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("download operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("download operator failed. expected path as first value, got %s.", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
 		}
 
 		if t2 != ValueTypeString {
-			return typeBad(fmt.Errorf("download operator failed. expected string as second value, got %s.", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "string")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("readfile", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("readfile")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("readfile operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("readfile operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("readfile operator failed. expected path, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "path")
 		}
 
 		d.base.typeStack.Push(ValueTypeString)
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("copy", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("copy")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("copy operator failed. stack size is %d. 2 is required.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("copy operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("copy operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("copy operator failed. expected path as first value, got %s.", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
 		}
 
 		if t2 != ValueTypePath {
-			return typeBad(fmt.Errorf("copy operator failed. expected path as second value, got %s.", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "path")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("exist", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("exist")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("exist operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("exist operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("exist operator failed. expected path, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "path")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("touch", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("touch")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("touch operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("touch operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("touch operator failed. expected path, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "path")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("mkdir", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("mkdir")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("mkdir operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("mkdir operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("mkdir operator failed. expected path, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "path")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("rm", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("rm")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("rm operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("rm operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("rm operator failed. expected path, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "path")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("unzip", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("unzip")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("unzip operator failed. stack size is %d. 2 is required.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("unzip operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("unzip operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("unzip operator failed. expected path as first value, got %s.", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
 		}
 
 		if t2 != ValueTypePath {
-			return typeBad(fmt.Errorf("unzip operator failed. expected path as second value, got %s.", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "path")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("lsf", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("lsf")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("lsf operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("lsf operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("lsf operator failed. expected path, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "path")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("getf", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("getf")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("getf operator failed. stack size is %d. 2 is required.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("getf operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("getf operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("getf operator failed. expected path as first value, got %s.", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
 		}
 
 		if t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("getf operator failed. expected int as second value, got %s.", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
 		}
 
 		d.base.typeStack.Push(ValueTypeString)
 	} else if d.token.Equals("lsd", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("lsd")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("lsd operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("lsd operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("lsd operator failed. expected path, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "path")
 		}
 
 		d.base.typeStack.Push(ValueTypeInt)
 	} else if d.token.Equals("getd", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("getd")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("getd operator failed. stack size is %d. 2 is required.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("getd operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("getd operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypePath {
-			return typeBad(fmt.Errorf("getd operator failed. expected path as first value, got %s.", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "path")
 		}
 
 		if t2 != ValueTypeInt {
-			return typeBad(fmt.Errorf("getd operator failed. expected int as second value, got %s.", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "int")
 		}
 
 		d.base.typeStack.Push(ValueTypeString)
 	} else if d.token.Equals("concat", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("concat")
 		if d.base.typeStack.Len() < 2 {
-			return typeBad(fmt.Errorf("concat operator failed. stack size is %d. 2 is required.", d.base.typeStack.Len()))
+			p.Stack(2, d.base.typeStack.Len())
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("concat operator failed. failed to get first value."))
+			p.GetValue(0)
 		}
 
 		t2, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("concat operator failed. failed to get second value."))
+			p.GetValue(1)
 		}
 
 		if t1 != ValueTypeString {
-			return typeBad(fmt.Errorf("concat operator failed. expected string as first value, got %s.", ValueTypeFormat(t1)))
+			p.ExpectNameType("first value", ValueTypeFormat(t1), "string")
 		}
 
 		if t2 != ValueTypeString && t2 != ValueTypePath {
-			return typeBad(fmt.Errorf("concat operator failed. expected string or path as second value, got %s.", ValueTypeFormat(t2)))
+			p.ExpectNameType("second value", ValueTypeFormat(t2), "string", "path")
 		}
 
 		d.base.typeStack.Push(t2)
 	} else if d.token.Equals("tostring", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("tostring")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("tostring operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("tostring operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypePath && t1 != ValueTypeInt && t1 != ValueTypeString {
-			return typeBad(fmt.Errorf("tostring operator failed. expected path, int, or string, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "path", "int", "string")
 		}
 
 		d.base.typeStack.Push(ValueTypeString)
 	} else if d.token.Equals("token", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("token")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("token operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("token operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeString {
-			return typeBad(fmt.Errorf("token operator failed. expected string, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "string")
 		}
 
 		d.base.typeStack.Push(ValueTypePath)
 	} else if d.token.Equals("absolute", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("absolute")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("absolute operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("absolute operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeString {
-			return typeBad(fmt.Errorf("absolute operator failed. expected string, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "string")
 		}
 
 		d.base.typeStack.Push(ValueTypePath)
 	} else if d.token.Equals("relative", types.TokenTypeKeyword) {
+		p := errors.PrepareTypeCheck("relative")
 		if d.base.typeStack.Len() < 1 {
-			return typeBad(fmt.Errorf("relative operator failed. stack is empty."))
+			p.Empty()
 		}
 
 		t1, ok := d.base.typeStack.Pop()
 		if !ok {
-			return typeBad(fmt.Errorf("relative operator failed. failed to get first value."))
+			p.GetValue(-1)
 		}
 
 		if t1 != ValueTypeString {
-			return typeBad(fmt.Errorf("relative operator failed. expected string, got %s.", ValueTypeFormat(t1)))
+			p.ExpectType(ValueTypeFormat(t1), "string")
 		}
 
 		d.base.typeStack.Push(ValueTypePath)
