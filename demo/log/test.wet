@@ -1,0 +1,7 @@
+proc test do
+    "hello, world!" puts
+end
+
+@include nest.wet
+
+macro nop end

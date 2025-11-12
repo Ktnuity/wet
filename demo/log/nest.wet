@@ -1,0 +1,3 @@
+macro foobar
+    2dup drop drop
+end

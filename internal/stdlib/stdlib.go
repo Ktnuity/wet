@@ -9,29 +9,48 @@ import (
 	"io/fs"
 	"regexp"
 	"strings"
+
+	"github.com/ktnuity/wet/internal/types"
 )
 
 //go:embed std/*
 var stdFS embed.FS
 
-func GetContent() (string, error) {
+func GetContent() ([]*types.SourceSnippet, error) {
 	files, err := listFiles()
 	if err != nil {
-		return "", fmt.Errorf("failed to load std: %v", err)
+		return nil, fmt.Errorf("failed to load std: %v", err)
 	}
 
-	parts := make([]string, 0, len(files))
+	snippets := make([]*types.SourceSnippet, 0, 8)
 
 	for _, file := range files {
 		content, success, err := getFile(file)
 		if success {
-			parts = append(parts, content)
+			lines := strings.Split(content, "\n")
+			snippet := &types.SourceSnippet{
+				Name: file,
+				Start: 1,
+				End: len(lines),
+				Lines: make([]*types.SourceLine, 0, len(lines)),
+			}
+
+			/* how do I get the line number here? */
+			for idx, line := range lines {
+				snippet.Lines = append(snippet.Lines, &types.SourceLine{
+					Parent: snippet,
+					Content: line,
+					Line: idx + 1,
+				})
+			}
+
+			snippets = append(snippets, snippet)
 		} else if err != nil {
-			return "", fmt.Errorf("failed to load std file '%s': %v", file, err)
+			return nil, fmt.Errorf("failed to load std file '%s': %v", file, err)
 		}
 	}
 
-	return strings.Join(parts, "\n"), nil
+	return snippets, nil
 }
 
 func getFile(fileName string) (string, bool, error) {
@@ -50,7 +69,7 @@ func getFile(fileName string) (string, bool, error) {
 		return "", false, fmt.Errorf("failed to open std file '%s': %v", stdPath, err)
 	}
 
-	return string(data), true, nil
+	return strings.TrimSuffix(string(data), "\n"), true, nil
 }
 
 func listFiles() ([]string, error) {
@@ -66,9 +85,7 @@ func listFiles() ([]string, error) {
 		return result, fmt.Errorf("failed to open std lib index: %v", err)
 	}
 
-	input := strings.Split(string(data), "\n")
-
-	for _, line := range input {
+	for line := range strings.Lines(string(data)) {
 		fileName := strings.TrimSpace(line)
 		if len(fileName) == 0 {
 			continue

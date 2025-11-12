@@ -1,0 +1,11 @@
+proc add int in int int do
+    +
+end
+
+proc safe_sub int in int int do
+    2dup >= if
+        -
+    else
+        drop
+    end
+end

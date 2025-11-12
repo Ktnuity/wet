@@ -1,0 +1,18 @@
+proc log in string do
+    "] " swap + "\n" + puts
+end
+
+@include maths.wet
+
+proc main do
+    5 7 add tostring log
+    5 7 safe_sub tostring log
+    7 5 safe_sub tostring log
+end
+
+@include test.wet
+@include empty.wet
+
+main
+
+@include cutoff.wet
