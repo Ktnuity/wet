@@ -4,25 +4,35 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/ktnuity/wet/internal/types"
 )
 
 type PreparedTypeCheck struct {
-	operator		string
+	operator		*types.Word
 	info			[]string
 }
 
-func BadTypeCheck(operator string, info...string) {
+func BadTypeCheck(operator *types.Word, info...string) {
 	fmt.Printf("Type Checker Failed!\n")
-	fmt.Printf("Operator: %s\n", operator)
+	fmt.Printf("Operator: %s\n", operator.UnwrapName())
 
-	for _, line := range info {
+	traceLines := trace(operator)
+
+	lines := make([]string, 0, len(info) + len(traceLines) + 1)
+
+	lines = append(lines, traceLines...)
+	lines = append(lines, "")
+	lines = append(lines, info...)
+
+	for _, line := range lines {
 		fmt.Printf(" %s\n", line)
 	}
 
 	os.Exit(1)
 }
 
-func PrepareTypeCheck(operator string, info...string) *PreparedTypeCheck {
+func PrepareTypeCheck(operator *types.Word, info...string) *PreparedTypeCheck {
 	return &PreparedTypeCheck{
 		operator, info,
 	}
@@ -149,6 +159,12 @@ func (p *PreparedTypeCheck) ExpectNameType(name, got string, expects...string) {
 	p.Throw(fmt.Sprintf("Expected %s %s, got %s.", expect, name, got))
 }
 
+func (p *PreparedTypeCheck) ExpectNameTypeCause(got *types.Word, expects...string) {
+	expect := strings.Join(expects, " or ")
+
+	p.Throw(fmt.Sprintf("Expected %s cause, got %v.", expect, got))
+}
+
 func (p *PreparedTypeCheck) UnexpectedType(index int, got string) {
 	names := []string{
 		"first",
@@ -174,10 +190,32 @@ func (p *PreparedTypeCheck) ConnectedTokenError(name string, err error) {
 	p.Throw(fmt.Sprintf("Connected keyword '%s' failed.", name), fmt.Sprintf("Error: %v", err))
 }
 
-func (p *PreparedTypeCheck) CallLeadingError(name string, err error) {
-	p.Throw(fmt.Sprintf("Error leading into '%s' call: %v", name, err))
+func (p *PreparedTypeCheck) CallLeadingError(word *types.Word, err error) {
+	p.withTrace(word, fmt.Sprintf("Error leading into %s call: %v", word.UnwrapName(), err), "Referencing:")
 }
 
 func (p *PreparedTypeCheck) CallLeavingError(name string, err error) {
 	p.Throw(fmt.Sprintf("Error leaving '%s' call: %v", name, err))
+}
+
+func (p *PreparedTypeCheck) withTrace(word *types.Word, info...string) {
+	result := make([]string, 0, 8)
+	result = append(result, info...)
+	result = append(result, trace(word)...)
+	p.Throw(result...)
+}
+
+func trace(word *types.Word) []string {
+	result := make([]string, 0, 8)
+
+	result = append(result, fmt.Sprintf("at %s:%d:%d:", word.LineFile(), word.LineNumber(), word.EntryNumber()))
+
+	snippet := word.UnwrapLine().Parent.Parent
+
+	for snippet != nil {
+		result = append(result, fmt.Sprintf("at %s:%d:", snippet.Snippet.Name, snippet.Line))
+		snippet = snippet.Snippet.Parent
+	}
+
+	return result
 }

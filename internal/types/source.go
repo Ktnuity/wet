@@ -9,7 +9,13 @@ type SourceSnippet struct {
 	Name			string
 	Start			int
 	End				int
+	Parent			*SourceParent
 	Lines			[]*SourceLine
+}
+
+type SourceParent struct {
+	Snippet			*SourceSnippet
+	Line			int
 }
 
 type SourceLine struct {

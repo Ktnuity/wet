@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	//"github.com/ktnuity/wet/internal/app"
+	"github.com/ktnuity/wet/internal/app"
 	"github.com/ktnuity/wet/internal/source"
 	"github.com/ktnuity/wet/internal/util"
 )
@@ -28,18 +28,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Name: %s\n", src.Name)
-
-	for i, snippet := range src.Snippets {
-		fmt.Printf("Snippet %d: %s[%d:%d]\n", i + 1, snippet.Name, snippet.Start, snippet.End)
-
-		for _, line := range snippet.Lines {
-			fmt.Printf("%d\t: %s\n", line.Line, line.Content)
-		}
-	}
-
-
-	//err = app.EntryPoint(src, args)
-	//util.ExitWithError(err, util.AsRef("Runtime failure"))
+	err = app.EntryPoint(src, args)
+	util.ExitWithError(err, util.AsRef("Runtime failure"))
 }
 

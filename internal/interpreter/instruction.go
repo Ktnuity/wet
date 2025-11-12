@@ -59,13 +59,13 @@ func scanMacros(tokens []types.Token) ([]types.Token, map[string][]types.Token, 
 	for idx := 0; idx < len(tokens); idx++ {
 		token := &tokens[idx]
 
-		if token.Value == "macro" {
+		if token.Word.Equals("macro") {
 			idx++
 			if idx >= len(tokens) {
 				return nil, nil, fmt.Errorf("failed to detect macro name at index %d. reached eof early.", idx)
 			}
 
-			macroName := tokens[idx].Value
+			macroName := tokens[idx].Word
 
 			idx++
 			macroStart := idx
@@ -86,7 +86,7 @@ func scanMacros(tokens []types.Token) ([]types.Token, map[string][]types.Token, 
 					} else {
 						scopes--
 					}
-				} else if endToken.Value == "if" || endToken.Value == "while" || endToken.Value == "unless" || endToken.Value == "until" {
+				} else if endToken.Word.Any("if", "unless", "while", "until") {
 					scopes++
 				} else if endToken.Equals("macro", types.TokenTypeNone) {
 					return nil, nil, fmt.Errorf("failed to parse macro body. detected unsupported nested macro at index %d for macro name '%s'.", idx, macroName)
@@ -105,7 +105,7 @@ func scanMacros(tokens []types.Token) ([]types.Token, map[string][]types.Token, 
 				body[itemIndex - macroStart] = tokens[itemIndex]
 			}
 
-			resultMap[macroName] = body
+			resultMap[macroName.UnwrapName()] = body
 
 			idx = end
 		} else {
@@ -135,7 +135,7 @@ func expandMacros(tokens []types.Token) ([]types.Token, error) {
 		for idx := range len(tokens) {
 			token := &tokens[idx]
 
-			body, exists := macroMap[token.Value]
+			body, exists := macroMap[token.Word.UnwrapName()]
 			if exists {
 				for _, item := range body {
 					newTokens = append(newTokens, item)
@@ -208,7 +208,7 @@ func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 			ipStack.Push(idx);
 			instruction.Next = ip
 
-			switch other.Token.Value {
+			switch other.Token.Word.UnwrapName() {
 			case "while": instruction.Mode = DoModeWhile
 			case "until": instruction.Mode = DoModeUntil
 			}
@@ -234,7 +234,7 @@ func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 				instruction.Mode = EndModeProc
 				other.Next = idx + 1
 
-				procs[other.Token.Extra.Proc.Name] = Proc{
+				procs[other.Token.Extra.Proc.Name.UnwrapName()] = Proc{
 					other.Token.Extra.Proc.Name,
 					ip + 1,
 					idx,

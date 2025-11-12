@@ -68,6 +68,9 @@ func Load(args *types.WetArgs) (*types.Source, ExitCallback) {
 		util.ExitWithError(err, util.AsRef("Failed to load input source"))
 	}
 
+	err = stdlib.Attach(inputSource, std)
+	util.ExitWithError(err, util.AsRef(fmt.Sprintf("Failed to load file: %s", sourcePath)))
+
 	source, err = processSource(inputSource, 4, args)
 	util.ExitWithError(err, util.AsRef(fmt.Sprintf("Failed to load file: %s", sourcePath)))
 
@@ -111,6 +114,15 @@ func loadFile(path string) (*types.SourceSnippet, error) {
 	return snippet, nil
 }
 
+func attach(snippet *types.SourceSnippet, snippets []*types.SourceSnippet, line int) {
+	for _, item := range snippets {
+		item.Parent = &types.SourceParent{
+			Snippet: snippet,
+			Line: line,
+		}
+	}
+}
+
 func processSource(snippet *types.SourceSnippet, maxDepth int, args *types.WetArgs) ([]*types.SourceSnippet, error) {
 	if maxDepth <= 0 {
 		return nil, fmt.Errorf("failed to load source. max depth reached.")
@@ -140,6 +152,8 @@ func processSource(snippet *types.SourceSnippet, maxDepth int, args *types.WetAr
 					Lines: snippet.Lines[:(line.Line-snippet.Start)],
 				})
 			}
+
+			attach(snippet, procSource, line.Line)
 
 			snippets = append(snippets, procSource...)
 

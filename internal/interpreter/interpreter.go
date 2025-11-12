@@ -93,7 +93,7 @@ func (ip *Interpreter) Step() (bool, error) {
 		return ip.defaultStep(*result)
 	}
 
-	proc, ok := ip.procs[data.token.Value]
+	proc, ok := ip.procs[data.token.Word.UnwrapName()]
 	if ok {
 		ip.calls.Push(ip.ip + 1)
 		ip.ip = int(proc.Start)

@@ -9,7 +9,7 @@ import (
 	"github.com/ktnuity/wet/internal/util"
 )
 
-func EntryPoint(src string, args *types.WetArgs) error {
+func EntryPoint(src *types.Source, args *types.WetArgs) error {
 	if util.HasFlag(args.Flags, types.WetFlagVerboseRuntime) {
 		fmt.Printf("Code:\n%s\n", src)
 		fmt.Printf("Tokenizing code...\n")

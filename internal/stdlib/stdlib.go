@@ -53,6 +53,37 @@ func GetContent() ([]*types.SourceSnippet, error) {
 	return snippets, nil
 }
 
+func Attach(source *types.SourceSnippet, snippets []*types.SourceSnippet) error {
+	var std *types.SourceSnippet
+
+	for _, snippet := range snippets {
+		if snippet.Name == "std.wet" {
+			std = snippet
+			break
+		}
+	}
+
+	if std == nil {
+		return fmt.Errorf("failed to attach source to std.")
+	}
+
+	for _, snippet := range snippets {
+		if snippet.Name == "std.wet" {
+			snippet.Parent = &types.SourceParent{
+				Snippet: source,
+				Line: 0,
+			}
+		} else {
+			snippet.Parent = &types.SourceParent{
+				Snippet: std,
+				Line: 0,
+			}
+		}
+	}
+
+	return nil
+}
+
 func getFile(fileName string) (string, bool, error) {
 	if !validFilename(fileName) {
 		return "", false, nil
