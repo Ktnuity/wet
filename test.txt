@@ -1,0 +1,13 @@
+demo/typecheck/init.wet
+demo/arithmetics/init.wet
+demo/langtest/init.wet
+demo/proc/init.wet
+demo/resource/init.wet
+demo/tests/std.wet
+demo/tokens/init.wet
+demo/tools/init.wet
+demo/untilunless/init.wet
+demo/zip/init.wet
+--help
+--license
+--version

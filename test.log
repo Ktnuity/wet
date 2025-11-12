@@ -1,0 +1,376 @@
+Test 0 | demo/typecheck/init.wet
+69
+35
+Ans: 69
+foo/bar/init.txt
+if
+if
+else
+unless
+else
+unless
+0
+1
+2
+3
+4
+0: 0
+1: 1
+2: 3
+3: 6
+4: 10
+total: 10
+0: 0
+1: 1
+2: 3
+3: 6
+4: 10
+total: 10
+Test 1 | demo/arithmetics/init.wet
+test segment: boolean
+testing &&
+ok
+ok
+ok
+ok
+testing ||
+ok
+ok
+ok
+ok
+test segment: logical
+testing =
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+testing !=
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+testing <
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+testing >
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+testing <=
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+testing >=
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+ok
+testing !
+ok
+ok
+ok
+ok
+test segment: bitwise
+testing &
+ok
+ok
+ok
+ok
+ok
+testing |
+ok
+ok
+ok
+testing ^
+ok
+ok
+ok
+ok
+ok
+testing ~
+ok
+ok
+ok
+test segment: arithmetics
+testing +
+ok
+ok
+ok
+ok
+ok
+ok
+testing -
+ok
+ok
+ok
+ok
+testing /
+ok
+ok
+ok
+ok
+testing *
+ok
+ok
+ok
+ok
+testing %
+ok
+ok
+ok
+testing ++
+ok
+ok
+ok
+testing --
+ok
+ok
+ok
+ok
+ok
+ok
+
+verdict: ok
+Test 2 | demo/langtest/init.wet
+Test 0
+Result: 1
+Match:  1
+Verdict: Success
+Test 1
+Result: 233168
+Match:  233168
+Verdict: Success
+Test 2
+Result: 4613732
+Match:  4613732
+Verdict: Success
+Test 3
+Result: 6857
+Match:  6857
+Verdict: Success
+Test 3 | demo/proc/init.wet
+fib
+0: 0
+1: 1
+2: 1
+3: 2
+4: 3
+5: 5
+6: 8
+7: 13
+8: 21
+9: 34
+10: 55
+11: 89
+12: 144
+13: 233
+14: 377
+done
+Test 4 | demo/resource/init.wet
+test segment: basic
+testing relative
+ok
+testing absolute
+ok
+testing token
+ok
+test segment: spaces
+testing relative
+ok
+ok
+testing absolute
+ok
+ok
+testing token
+ok
+ok
+ok
+
+verdict: ok
+Test 5 | demo/tests/std.wet
+test indent
+Result:     foo
+Match:      foo
+Verdict: Success
+test nindent 1
+Result:     foo
+Match:      foo
+Verdict: Success
+test nindent 3
+Result:             foo
+Match:              foo
+Verdict: Success
+Test 6 | demo/tokens/init.wet
+] cleaning up old files.
+] running main token test.
+] downloading license.
+] validating download.
+] download success.
+] license file content:
+Copyright (c) 2025 Kirdow
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+] running last cleanup.
+] removing: license.txt
+Test 7 | demo/tools/init.wet
+] downloading license...
+] download success.
+] license downloaded:
+Copyright (c) 2025 Kirdow
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+] license file removed.
+Test 8 | demo/untilunless/init.wet
+testing if
+testing true if
+ok
+testing false if
+testing true if else
+ok
+testing false if else
+ok
+testing while sum(1,5)
+ok
+testing unless
+testing false unless
+ok
+testing true unless
+testing false unless else
+ok
+testing true unless else
+ok
+testing until
+testing until sum(1,5)
+ok
+
+verdict: ok
+Test 9 | demo/zip/init.wet
+] cleaning up old files and setting up pre-requisites.
+] running main zip test.
+] downloading zip.
+] validating download.
+] download success.
+] unzipping file.
+] content of first file:
+This is in foo.txt
+] content of second file:
+This is in bar.txt
+] running last cleanup.
+] removing: root/foo.txt
+] removing: root/bar.txt
+] removing: root
+Test 10 | ./wet --help
+wet is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.
+It's:
+  - At some points a pre-build.
+  - At other parts a post-build.
+  - You may even call it a build-system.
+
+In other terms, wet is a collection of tasks you'd usually see run in a project to initialize tools and set up for active
+ development. It could be downloading a file, unzipping that file, placing some of its content in different locations,
+ making everything simple for the new user by doing all the small work for you.
+
+It's sort of there in the name. *wet* is the liquid as it's poured from the kettle into every cup of the dozens of
+ people visiting you. You shouldn't need to do it yourself, *wet* is the servant you've hired to do it for you,
+ and it does exactly as you've told it to.
+
+Commands:
+    --help, show this menu
+    --version, show wet version
+    --license, show wet license
+
+For more info, see: https://github.com/Ktnuity/wet
+
+Released under MIT License: https://github.com/Ktnuity/wet/blob/master/LICENSE
+
+Copyright (c) 2025 Kirdow
+Test 11 | ./wet --license
+wet is released under MIT License
+
+Copyright (c) 2025 Kirdow
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+Test 12 | ./wet --version
+wet v0.1.0
+Copyright (c) 2025 Kirdow
+Released under MIT License.
+Test 13 | ./wet
+wet v0.1.0
+Copyright (c) 2025 Kirdow
+Released under MIT License.
+Usage: wet [options] <file>
