@@ -738,7 +738,7 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 
 			d.base.typeStack = d.base.typeStack[:d.base.typeStack.Len()-len(out)]
 
-			typecheckv("Exit proc %s\n", preview.cause.Token.Extra.Proc.Name)
+			typecheckv("Exit proc %s\n", preview.cause.Token.Extra.Proc.Name.UnwrapName())
 		} else {
 			p.Throw(fmt.Sprintf("Connected keyword '%v' is not implemented.", preview.cause.Token.Word))
 		}
@@ -758,7 +758,7 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 			p.Throw("Skip is undefined.")
 		}
 
-		typecheckv("Enter proc %s\n", d.token.Extra.Proc.Name)
+		typecheckv("Enter proc %s\n", d.token.Extra.Proc.Name.UnwrapName())
 	} else if d.token.Equals("ret", types.TokenTypeKeyword) {
 		errors.BadTypeCheck(d.token.Word, "Not implemented.")
 	} else if d.token.Equals("dret", types.TokenTypeKeyword) {

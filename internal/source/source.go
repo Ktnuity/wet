@@ -157,19 +157,8 @@ func processSource(snippet *types.SourceSnippet, maxDepth int, args *types.WetAr
 
 			snippets = append(snippets, procSource...)
 
-			if false {
-				if snippet.End > line.Line {
-					snippets = append(snippets, &types.SourceSnippet{
-						Name: snippet.Name,
-						Start: line.Line+1,
-						End: snippet.End,
-						Lines: snippet.Lines[(snippet.End-line.Line):],
-					})
-				}
-			} else {
-				snippet.Lines = snippet.Lines[(line.Line-snippet.Start+1):]
-				snippet.Start = line.Line+1
-			}
+			snippet.Lines = snippet.Lines[(line.Line-snippet.Start+1):]
+			snippet.Start = line.Line+1
 		}
 	}
 

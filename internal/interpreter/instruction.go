@@ -70,7 +70,7 @@ func scanMacros(tokens []types.Token) ([]types.Token, map[string][]types.Token, 
 			idx++
 			macroStart := idx
 			if idx >= len(tokens) {
-				return nil, nil, fmt.Errorf("failed to detect macro start at index %d for macro name '%s'. reached eof early.", idx, macroName)
+				return nil, nil, fmt.Errorf("failed to detect macro start at index %d for macro name '%s'. reached eof early.", idx, macroName.UnwrapName())
 			}
 
 			end := -1
@@ -89,14 +89,14 @@ func scanMacros(tokens []types.Token) ([]types.Token, map[string][]types.Token, 
 				} else if endToken.Word.Any("if", "unless", "while", "until") {
 					scopes++
 				} else if endToken.Equals("macro", types.TokenTypeNone) {
-					return nil, nil, fmt.Errorf("failed to parse macro body. detected unsupported nested macro at index %d for macro name '%s'.", idx, macroName)
+					return nil, nil, fmt.Errorf("failed to parse macro body. detected unsupported nested macro at index %d for macro name '%s'.", idx, macroName.UnwrapName())
 				}
 
 				idx++
 			}
 
 			if end == -1 {
-				return nil, nil, fmt.Errorf("failed to find end for macro name '%s' definition at index %d.", macroName, idx)
+				return nil, nil, fmt.Errorf("failed to find end for macro name '%s' definition at index %d.", macroName.UnwrapName(), idx)
 			}
 
 			body := make([]types.Token, end - macroStart)
