@@ -1,8 +1,8 @@
-macro log
+proc log in string do
     "] " swap + "\n" + puts
 end
 
-macro remove
+proc remove in path do
     dup exist if
         "removing: " over tostring + log
         
@@ -14,23 +14,23 @@ macro remove
     drop
 end
 
-macro validate_exist
+proc validate_exist in path do
     dup exist ! if
-        "file " over tostring + " could not be found. exiting..." log
+        "file " over tostring + " could not be found. exiting..." + log
         exit
     end
 
     drop
 end
 
-macro cleanup
+proc cleanup do
     ./root/foo.txt remove
     ./root/bar.txt remove
     ./file.txt remove
     ./root remove
 end
 
-macro preq
+proc preq do
     cleanup
 
     ./root mkdir ! if

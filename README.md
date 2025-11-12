@@ -117,11 +117,11 @@ As you can see, macros don't exist at runtime. Because of this, you cannot use m
 
 ## Procedures
 Procedures are just like macros, but they persist at runtime, and are called whenever a name is encountered.
-You define a procedure by writing `proc <name>`, and you end it with `end`.
+You define a procedure by writing `proc <name> [<out types>] [in <in types>] do`, and you end it with `end`.
 
 Example:
 ```
-proc my_print
+proc my_print in int do
     dup tostring "\n" + puts
 end
 
@@ -189,7 +189,7 @@ When a task downloads to a file, it would need an absolute file in relation to y
   - `<src>` and `<dst>` both expects any resource location.
   - copies `<src>` to `<dst>`
     - both `<src>` and `<dst>` is consumed.
-    - pushes `true` if successful, `true false` if `<dst>` already exist, `false false` if unsuccessful.
+    - pushes `true` if successful, `false` if `<dst>` already exist or if copy was unsuccessful.
 - `<res> exist`
   - `<res>` expects any resource location.
   - checks the existance of a `<res>` file.
@@ -214,7 +214,7 @@ When a task downloads to a file, it would need an absolute file in relation to y
   - `<res>` and `<dst>` expects any resource location.
   - unzips `<res>` into `<dst>` directory.
     - both `<res>` and `<dst>` is consumed.
-    - pushes `<dir count> <file count>` if successful, `-1` otherwise.
+    - pushes `<dir count> <file count>` if successful, `-1 -1` otherwise.
 - `<dir> lsf`
   - `<dir>` expects any resource location directory.
   - lists file count in `<dir>`.

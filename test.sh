@@ -4,32 +4,35 @@ set -e
 
 ./build.sh
 
+echo "[=] Type Checker"
+./wet ./demo/typecheck/init.wet "$@"
+
 echo "[=] Arithmetics"
-./wet ./demo/arithmetics/init.wet
+./wet ./demo/arithmetics/init.wet "$@"
 
 echo "[=] Lang Test"
-./wet ./demo/langtest/init.wet
+./wet ./demo/langtest/init.wet "$@"
 
 echo "[=] Procedures"
-./wet ./demo/proc/init.wet
+./wet ./demo/proc/init.wet "$@"
 
 echo "[=] Resource"
-./wet ./demo/resource/init.wet
+./wet ./demo/resource/init.wet "$@"
 
 echo "[=] Tests"
-./wet ./demo/tests/std.wet
+./wet ./demo/tests/std.wet "$@"
 
 echo "[=] Tokens"
-./wet ./demo/tokens/init.wet
+./wet ./demo/tokens/init.wet "$@"
 
 echo "[=] Tools"
-./wet ./demo/tools/init.wet
+./wet ./demo/tools/init.wet "$@"
 
 echo "[=] Until + Unless"
-./wet ./demo/untilunless/init.wet
+./wet ./demo/untilunless/init.wet "$@"
 
 echo "[=] Zip"
-./wet ./demo/zip/init.wet
+./wet ./demo/zip/init.wet "$@"
 
 echo "[=] Commands"
 echo "[help]"

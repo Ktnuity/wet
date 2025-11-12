@@ -48,7 +48,61 @@ func TokenizeCode(input string) ([]types.Token, error) {
 				}
 			}
 
-			token.Extra = word
+			procName := word
+
+			tokenv("proc name: %s\n", procName)
+
+			outTypes := make([]types.ValueType, 0, 8)
+
+			for {
+				nextScan, word = nextWord(*nextScan)
+				if nextScan == nil {
+					return result, fmt.Errorf("failed to tokenize code: proc out type experienced pre-mature exit.")
+				}
+
+				tokenv("Out word: %s\n", word)
+
+				if word == "in" || word == "do" {
+					break
+				}
+				
+				outType := types.ParseValueType(word)
+				if !outType.Any() {
+					return result, fmt.Errorf("failed to tokenize code: proc out type '%s' is not valid.", word)
+				}
+
+				outTypes = append(outTypes, outType)
+			}
+
+			inTypes := make([]types.ValueType, 0, 8)
+
+			if word != "do" {
+				for {
+					nextScan, word = nextWord(*nextScan)
+					if nextScan == nil {
+						return result, fmt.Errorf("failed to tokenize code: proc in type experienced pre-mature exit.")
+					}
+
+					tokenv("In word: %s\n", word)
+
+					if word == "do" {
+						break
+					}
+					
+					inType := types.ParseValueType(word)
+					if !inType.Any() {
+						return result, fmt.Errorf("failed to tokenize code: proc in type '%s' is not valid.", word)
+					}
+
+					inTypes = append(inTypes, inType)
+				}
+			}
+
+			token.Extra.Proc = &types.TokenExtraProc{
+				Name: procName,
+				In: inTypes,
+				Out: outTypes,
+			}
 		}
 
 		result = append(result, token)
@@ -76,11 +130,11 @@ func LogTokens(tokens []types.Token) error {
 		return fmt.Errorf("failed to log tokens. no tokens present")
 	}
 
-	fmt.Printf("Token Count: %d\n", len(tokens))
+	tokenv("Token Count: %d\n", len(tokens))
 
 	for idx, token := range tokens {
 		format := token.Format()
-		fmt.Printf("%d : %s\n", idx, format)
+		tokenv("%d : %s\n", idx, format)
 	}
 
 	return nil
@@ -215,7 +269,7 @@ var keywords = map[string]bool{
 	"if": true, "unless": true, "else": true,
 	"ret": true, "iret": true, "dret": true,
 	"dup": true, "over": true, "swap": true, "2dup": true, "2swap": true, "drop": true, "nop": true,
-	"store": true, "load": true,
+	"store": true, "iload": true, "sload": true,
 	"download": true, "move": true, "copy": true, "exist": true, "touch": true, "mkdir": true, "rm": true, "readfile": true,
 	"unzip": true, "lsf": true, "getf": true, "lsd": true, "getd": true,
 	"concat": true, "tostring": true, "token": true, "absolute": true, "relative": true,

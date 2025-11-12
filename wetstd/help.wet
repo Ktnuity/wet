@@ -1,4 +1,4 @@
-proc wet_cmd_help 
+proc wet_cmd_help do
     wet_name " is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.\n" + puts
     "It's:\n" puts
     "  - At some points a pre-build.\n" puts

@@ -1,9 +1,13 @@
 package interpreter
 
-import "fmt"
+import (
+	"fmt"
 
-func (ip *Interpreter) pop() (StackValue, error) {
-	var value StackValue
+	"github.com/ktnuity/wet/internal/types"
+)
+
+func (ip *Interpreter) pop() (types.DataType, error) {
+	var value types.DataType
 	value, ok := ip.stack.Pop()
 	if !ok {
 		return value, fmt.Errorf("failed to ipop. stack is empty.")
@@ -14,12 +18,12 @@ func (ip *Interpreter) pop() (StackValue, error) {
 	return value, nil
 }
 
-func (ip *Interpreter) peek() (StackValue, error) {
+func (ip *Interpreter) peek() (types.DataType, error) {
 	return ip.peekOffset(0)
 }
 
-func (ip *Interpreter) peekOffset(offset int) (StackValue, error) {
-	var value StackValue
+func (ip *Interpreter) peekOffset(offset int) (types.DataType, error) {
+	var value types.DataType
 	idx := ip.stack.Len() - 1 - offset
 	if idx < 0 {
 		return value, fmt.Errorf("failed to ipeek. idx(%d) < 0", idx)
@@ -31,7 +35,7 @@ func (ip *Interpreter) peekOffset(offset int) (StackValue, error) {
 	return ip.stack[ip.stack.Len() - 1 - offset], nil
 }
 
-func (ip *Interpreter) push(value StackValue) error {
+func (ip *Interpreter) push(value types.DataType) error {
 	if !value.IsAny() {
 		return fmt.Errorf("failed to push stack. value given, but unknown type.")
 	}
@@ -43,13 +47,13 @@ func (ip *Interpreter) push(value StackValue) error {
 }
 
 func (ip *Interpreter) ipush(item int) error {
-	return ip.push(StackInt(item))
+	return ip.push(types.TypeInt(item))
 }
 
 func (ip *Interpreter) spush(item string) error {
-	return ip.push(StackString(item))
+	return ip.push(types.TypeString(item))
 }
 
 func (ip *Interpreter) ppush(item string) error {
-	return ip.push(StackPath(item))
+	return ip.push(types.TypePath(item))
 }

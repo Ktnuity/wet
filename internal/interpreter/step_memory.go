@@ -27,36 +27,62 @@ func (ip *Interpreter) StepMemory(d *StepData) *StepResult {
 		}
 
 		ip.store(name, vValue)
-	} else if d.token.Equals("load", types.TokenTypeKeyword) {
+	} else if d.token.Equals("iload", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr("failed to run step. load operator failed. stack is empty.\n")
+			return ip.runtimeverr("failed to run step. iload operator failed. stack is empty.\n")
 		}
 
 		ip.runtimev("loading value from memory.\n")
 		vName, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. load operator failed. failed to get name: %v\n", err)
+			return ip.runtimeverr("failed to run step. iload operator failed. failed to get name: %v\n", err)
 		}
 
 		name, ok := vName.String()
 		if !ok {
-			return ip.runtimeverr("failed to run step. load operator failed. failed to get name value.\n")
+			return ip.runtimeverr("failed to run step. iload operator failed. failed to get name value.\n")
 		}
 
 		value, err := ip.load(name)
 		if err != nil {
-			return ip.runtimeverr("failed to run step. load operator failed. failed to load memory: %v\n", err)
+			return ip.runtimeverr("failed to run step. iload operator failed. failed to load memory: %v\n", err)
+		}
+
+		ivalue, ok := value.Int()
+		if !ok {
+			return ip.runtimeverr("failed to run step. iload operator failed. failed to load memory. int expected.\n")
 		}
 
 		ip.push(value)
-
-		left, okLeft := value.String()
-		right, okRight := value.Int()
-		if okLeft {
-			ip.runtimev("pushed \"%s\"\n", left)
-		} else if okRight {
-			ip.runtimev("pushed %d\n", right)
+		ip.runtimev("pushed %d\n", ivalue)
+	} else if d.token.Equals("sload", types.TokenTypeKeyword) {
+		if ip.stack.Len() < 1 {
+			return ip.runtimeverr("failed to run step. sload operator failed. stack is empty.\n")
 		}
+
+		ip.runtimev("loading value from memory.\n")
+		vName, err := ip.pop()
+		if err != nil {
+			return ip.runtimeverr("failed to run step. sload operator failed. failed to get name: %v\n", err)
+		}
+
+		name, ok := vName.String()
+		if !ok {
+			return ip.runtimeverr("failed to run step. sload operator failed. failed to get name value.\n")
+		}
+
+		value, err := ip.load(name)
+		if err != nil {
+			return ip.runtimeverr("failed to run step. sload operator failed. failed to load memory: %v\n", err)
+		}
+
+		svalue, ok := value.String()
+		if !ok {
+			return ip.runtimeverr("failed to run step. sload operator failed. failed to load memory. string expected.\n")
+		}
+
+		ip.push(value)
+		ip.runtimev("pushed \"%s\"\n", svalue)
 	} else {
 		return nil
 	}

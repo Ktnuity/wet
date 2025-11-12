@@ -39,13 +39,13 @@ end
 
 ./root lsf
 dup 2 != if
-    "demo zip contained 2 files but only " over + " found." log
+    "demo zip contained 2 files but only " over + " found." + log
     exit
 end
 
 ./root lsd
 dup 0 != if
-    "demo zip contained no directories but " over + " were found." log
+    "demo zip contained no directories but " over + " were found." + log
     exit
 end
 

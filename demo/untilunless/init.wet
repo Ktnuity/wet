@@ -3,7 +3,7 @@ macro ok
 end
 
 macro fail
-    "fails" load
+    "fails" iload
     1 +
     "fails" store
 
@@ -11,10 +11,10 @@ macro fail
 end
 
 macro verdict
-    "fails" load
+    "fails" iload
 
     dup 0 = if
-        "\nverdict: ok\n" puts
+        "\nverdict: ok\n" puts drop
     else
         "\nverdict: fail (failed " swap + " times)\n" + puts
     end

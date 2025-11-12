@@ -1,27 +1,34 @@
-proc stdtest
-    "test_expect" store
-    "test_value" store
-
-"Result:  " "test_value" load + "\n" + puts
-"Match:   " "test_expect" load + "\n" + puts
-"Verfict: "
-    "test_value" load
-    "test_expect" load
-        = if
-            "Success"
-          else
-            "Failure"
-          end
-    + "\n" + puts
+proc stditest in int int do
+    dup "Result: " swap + "\n" + puts
+    swap dup "Match:  " swap + "\n" + puts
+    = "Verdict: " swap if
+        "Success\n"
+    else
+        "Failure\n"
+    end
+    + puts
 end
 
-proc indent "    " swap + end
+proc stdstest in string string do
+    dup "Result: " swap + "\n" + puts
+    swap dup "Match:  " swap + "\n" + puts
+    = "Verdict: " swap if
+        "Success\n"
+    else
+        "Failure\n"
+    end
+    + puts
+end
 
-proc nindent
+proc indent string in string do
+    "    " swap +
+end
+
+proc nindent string in string int do
     swap "@nindent" store
     
     0 while 2dup > do
-        "@nindent" load
+        "@nindent" sload
         indent
         "@nindent" store
 
@@ -30,7 +37,7 @@ proc nindent
     drop
     drop
 
-    "@nindent" load
+    "@nindent" sload
 end
 
 macro iputs

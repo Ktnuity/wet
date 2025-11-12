@@ -234,10 +234,11 @@ func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 				instruction.Mode = EndModeProc
 				other.Next = idx + 1
 
-				procs[other.Token.Extra] = Proc{
-					other.Token.Extra,
+				procs[other.Token.Extra.Proc.Name] = Proc{
+					other.Token.Extra.Proc.Name,
 					ip + 1,
 					idx,
+					other.Token,
 				}
 			} else {
 				return nil, fmt.Errorf("failed to process instruction. end reached without if or else at index %d", idx)
