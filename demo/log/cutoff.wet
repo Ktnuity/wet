@@ -1,0 +1,3 @@
+proc cutoff in string do
+    dup puts drop
+end

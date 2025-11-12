@@ -58,8 +58,8 @@ func (vt *ValueType) Validate() bool {
 	}
 }
 
-func ParseValueType(name string) ValueType {
-	switch name {
+func ParseValueType(word *Word) ValueType {
+	switch word.UnwrapName() {
 	case "int":				return ValueTypeInt
 	case "string":			return ValueTypeString
 	case "path":			return ValueTypePath

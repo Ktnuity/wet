@@ -120,7 +120,7 @@ func typeCheck(data *TypeCheckData) error {
 		}
 
 		typecheckv("Stack[%d]: %s\n", len(data.typeStack), typeDumpStack(data.typeStack))
-		typecheckv("%d: %s\n", tip, token.Value)
+		typecheckv("%d: %v\n", tip, token.Word)
 
 		subData := TypeCheckSubData{
 			data, inst, token, &tip,
@@ -138,8 +138,8 @@ func typeCheck(data *TypeCheckData) error {
 			}
 		}
 
-		p := errors.PrepareTypeCheck("call")
-		proc, ok := data.procs[token.Value]
+		p := errors.PrepareTypeCheck(token.Word)
+		proc, ok := data.procs[token.Word.UnwrapName()]
 		if ok {
 			ins := proc.Token.Extra.Proc.In
 			outs := proc.Token.Extra.Proc.Out
@@ -149,7 +149,7 @@ func typeCheck(data *TypeCheckData) error {
 			}
 
 			if err := compareStacks(data.typeStack[data.typeStack.Len()-len(ins):], ins); err != nil {
-				p.CallLeadingError(token.Value, err)
+				p.CallLeadingError(token.Word, err)
 			}
 
 			data.typeStack = data.typeStack[:data.typeStack.Len()-len(ins)]
@@ -157,7 +157,7 @@ func typeCheck(data *TypeCheckData) error {
 
 			tip++
 		} else if !next {
-			errors.BadTypeCheck(token.Value, "Unknown operator.")
+			errors.BadTypeCheck(token.Word, "Unknown operator.")
 		}
 	}
 
@@ -204,8 +204,8 @@ func typeCheckLiteral(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckPrint(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals(".", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck(".", "Failed to print int.")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -219,7 +219,6 @@ func typeCheckPrint(d *TypeCheckSubData) (*TypeResult, error) {
 			p.ExpectType(t1.Format(), "int")
 		}
 	} else if d.token.Equals("puts", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("puts", "Failed to print string.")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -240,8 +239,8 @@ func typeCheckPrint(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("int", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("int")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -257,7 +256,6 @@ func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("string", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("string")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -282,8 +280,8 @@ func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckMemory(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("store", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("store")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -306,7 +304,6 @@ func typeCheckMemory(d *TypeCheckSubData) (*TypeResult, error) {
 			p.ExpectNameType("value", t2.Format(), "int", "string")
 		}
 	} else if d.token.Equals("iload", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("iload")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -322,7 +319,6 @@ func typeCheckMemory(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("sload", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("sload")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -345,8 +341,8 @@ func typeCheckMemory(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("+", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("+")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -379,7 +375,6 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(1)
 		}
 	} else if d.token.Equals("-", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("-")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -404,7 +399,6 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("*", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("*")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -429,7 +423,6 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("/", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("/")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -454,7 +447,6 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("%", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("%")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -479,7 +471,6 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("++", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("++")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -495,7 +486,6 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("--", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("--")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -518,8 +508,8 @@ func typeCheckArithmetic(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("dup", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("dup")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -536,7 +526,6 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 		d.base.typeStack.Push(t1)
 		d.base.typeStack.Push(t1)
 	} else if d.token.Equals("drop", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("drop")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -546,7 +535,6 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(-1)
 		}
 	} else if d.token.Equals("swap", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("swap")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -572,7 +560,6 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 		d.base.typeStack.Push(t1)
 		d.base.typeStack.Push(t2)
 	} else if d.token.Equals("over", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("over")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -585,7 +572,6 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(t2)
 	} else if d.token.Equals("2dup", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("2dup")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -604,7 +590,6 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 		d.base.typeStack.Push(t1)
 		d.base.typeStack.Push(t2)
 	} else if d.token.Equals("2swap", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("2swap")
 		if d.base.typeStack.Len() < 4 {
 			p.Stack(4, d.base.typeStack.Len())
 		}
@@ -657,8 +642,8 @@ func typeCheckStack(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("if", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("if")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -670,7 +655,6 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("unless", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("unless")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -682,7 +666,6 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("else", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("else")
 		preview := popStack(d.base)
 		if preview == nil {
 			p.Throw("No neighbor stack found.")
@@ -693,7 +676,7 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 		}
 
 		if !preview.cause.Token.Equals("if", types.TokenTypeKeyword) && !preview.cause.Token.Equals("unless", types.TokenTypeKeyword) {
-			p.ExpectNameType("cause", preview.cause.Token.Value, "if", "unless")
+			p.ExpectNameTypeCause(preview.cause.Token.Word, "if", "unless")
 		}
 
 		d.base.typeStackStack.Push(StackPreview{
@@ -703,7 +686,6 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack = preview.stack.Clone()
 	} else if d.token.Equals("do", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("do")
 		preview := popStack(d.base)
 		if preview == nil {
 			p.Throw("No neighbor stack found.")
@@ -714,12 +696,11 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 		}
 
 		if !preview.cause.Token.Equals("while", types.TokenTypeKeyword) && !preview.cause.Token.Equals("until", types.TokenTypeKeyword) {
-			p.ExpectNameType("cause", preview.cause.Token.Value, "while", "until")
+			p.ExpectNameTypeCause(preview.cause.Token.Word, "while", "until")
 		}
 
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("end", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("end")
 		preview := popStack(d.base)
 		if preview == nil {
 			p.Throw("No neighbor stack found.")
@@ -757,16 +738,16 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 
 			d.base.typeStack = d.base.typeStack[:d.base.typeStack.Len()-len(out)]
 
-			typecheckv("Exit proc %s\n", preview.cause.Token.Extra.Proc.Name)
+			typecheckv("Exit proc %s\n", preview.cause.Token.Extra.Proc.Name.UnwrapName())
 		} else {
-			p.Throw(fmt.Sprintf("Connected keyword '%s' is not implemented.", preview.cause.Token.Value))
+			p.Throw(fmt.Sprintf("Connected keyword '%v' is not implemented.", preview.cause.Token.Word))
 		}
 	} else if d.token.Equals("while", types.TokenTypeKeyword) {
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("until", types.TokenTypeKeyword) {
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("proc", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("proc")
+		p := errors.PrepareTypeCheck(d.token.Word)
 		pushStack(d.base, d.inst)
 
 		for _, inType := range d.inst.Token.Extra.Proc.In {
@@ -777,13 +758,13 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 			p.Throw("Skip is undefined.")
 		}
 
-		typecheckv("Enter proc %s\n", d.token.Extra.Proc.Name)
+		typecheckv("Enter proc %s\n", d.token.Extra.Proc.Name.UnwrapName())
 	} else if d.token.Equals("ret", types.TokenTypeKeyword) {
-		errors.BadTypeCheck("ret", "Not implemented.")
+		errors.BadTypeCheck(d.token.Word, "Not implemented.")
 	} else if d.token.Equals("dret", types.TokenTypeKeyword) {
-		errors.BadTypeCheck("dret", "Not implemented.")
+		errors.BadTypeCheck(d.token.Word, "Not implemented.")
 	} else if d.token.Equals("iret", types.TokenTypeKeyword) {
-		errors.BadTypeCheck("iret", "Not implemented.")
+		errors.BadTypeCheck(d.token.Word, "Not implemented.")
 	} else {
 		return typeNext()
 	}
@@ -792,8 +773,8 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("=", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("=")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -810,7 +791,6 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("!=", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("!=")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -827,7 +807,6 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("<", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("<")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -854,7 +833,6 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals(">", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck(">")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -881,7 +859,6 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("<=", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("<=")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -908,7 +885,6 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals(">=", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck(">=")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -935,7 +911,6 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("!", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("!")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -954,8 +929,8 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("~", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("~")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -971,7 +946,6 @@ func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("&", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("&")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -992,7 +966,6 @@ func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("|", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("|")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1013,7 +986,6 @@ func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("^", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("^")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1041,8 +1013,8 @@ func typeCheckBitwise(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckBoolean(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("&&", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("&&")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1059,7 +1031,6 @@ func typeCheckBoolean(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("||", types.TokenTypeSymbol) {
-		p := errors.PrepareTypeCheck("||")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1083,8 +1054,8 @@ func typeCheckBoolean(d *TypeCheckSubData) (*TypeResult, error) {
 }
 
 func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("download", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("download")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1109,7 +1080,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("readfile", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("readfile")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1126,7 +1096,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 		d.base.typeStack.Push(types.ValueTypeString)
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("copy", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("copy")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1152,7 +1121,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 		d.base.typeStack.Push(types.ValueTypeInt)
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("exist", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("exist")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1168,7 +1136,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("touch", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("touch")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1184,7 +1151,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("mkdir", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("mkdir")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1200,7 +1166,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("rm", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("rm")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1216,7 +1181,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("unzip", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("unzip")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1242,7 +1206,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 		d.base.typeStack.Push(types.ValueTypeInt)
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("lsf", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("lsf")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1258,7 +1221,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("getf", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("getf")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1283,7 +1245,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeString)
 	} else if d.token.Equals("lsd", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("lsd")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1299,7 +1260,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("getd", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("getd")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1324,7 +1284,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeString)
 	} else if d.token.Equals("concat", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("concat")
 		if d.base.typeStack.Len() < 2 {
 			p.Stack(2, d.base.typeStack.Len())
 		}
@@ -1349,7 +1308,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(t2)
 	} else if d.token.Equals("tostring", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("tostring")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1365,7 +1323,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypeString)
 	} else if d.token.Equals("token", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("token")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1381,7 +1338,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypePath)
 	} else if d.token.Equals("absolute", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("absolute")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
@@ -1397,7 +1353,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 
 		d.base.typeStack.Push(types.ValueTypePath)
 	} else if d.token.Equals("relative", types.TokenTypeKeyword) {
-		p := errors.PrepareTypeCheck("relative")
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
 		}
