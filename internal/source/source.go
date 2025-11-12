@@ -48,16 +48,14 @@ func Load(args *types.WetArgs) (string, ExitCallback) {
 		util.ExitWithError(err, util.AsRef("Failed to load input source"))
 	}
 
-	inputSourceWithStd := fmt.Sprintf("%s\n%s", std, inputSource)
-
-	source, err = processSource(inputSourceWithStd, 4, args)
+	source, err = processSource(inputSource, 4, args)
 	if sourcePath != nil {
 		util.ExitWithError(err, util.AsRef(fmt.Sprintf("Failed to load file: %s", *sourcePath)))
 	} else {
 		util.ExitWithError(err, util.AsRef("Failed to process source"))
 	}
 
-	return source, exit
+	return fmt.Sprintf("%s\n%s\n", std, source), exit
 }
 
 func usage(name string) {
