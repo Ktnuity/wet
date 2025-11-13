@@ -4,4 +4,4 @@ end
 
 @include nest.wet
 
-macro nop end
+proc nop do end

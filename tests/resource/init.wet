@@ -1,15 +1,61 @@
-macro ok "ok\n" puts end
-macro fail "fails" iload 1 + "fails" store "fail\n" puts end
-macro verdict "fails" iload dup 0 = if "\nverdict: ok\n" puts drop else "\nverdict: fail (failed " swap + " times)\n" + puts end end
-macro test "testing " swap + "\n" + puts end
-macro beg "test segment: " swap + "\n" + puts end
-macro truthy if ok else fail end end
-macro falsy unless ok else fail end end
-macro eq = truthy end
-macro neq = falsy end
+# Evaluated during successful test case
+proc ok do
+    "ok\n" puts
+end
 
-macro test_path
-    swap tostring eq
+# Evaluated during failed test case
+proc fail do
+    "fails" iload
+    ++ "fails" store
+
+    "fail\n" puts
+end
+
+# Evaluates and prints the final verdict
+proc verdict do
+    "fails" iload
+    dup 0 = if
+        "\nverdict: ok\n" puts drop
+    else
+        "\nverdict: fail (failed " swap + " times)\n" + puts
+    end
+end
+
+# Prints a test section to the screen
+proc test in string do
+    "testing " swap + "\n" + puts
+end
+
+# Prints a test category to the screen
+proc beg in string do
+    "test segment: " swap + "\n" + puts
+end
+
+# Test if a value is truthy
+proc truthy in int do
+    if
+        ok
+    else
+        fail
+    end
+end
+
+# Test if a value is falsy
+proc falsy in int do
+    unless
+        ok
+    else
+        fail
+    end
+end
+
+# Test if two strings are equal
+proc seq in string string do
+    = truthy
+end
+
+proc test_path int in path string do
+    swap tostring seq
 end
 
 0 "fails" store

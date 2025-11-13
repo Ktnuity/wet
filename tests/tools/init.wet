@@ -1,4 +1,4 @@
-macro log
+proc log in string do
     "] " swap + "\n" + puts
 end
 
