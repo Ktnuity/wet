@@ -19,5 +19,5 @@ end
 end
 drop
 
-"fib done\n" puts
+"done\n" puts
 
