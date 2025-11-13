@@ -6,17 +6,23 @@ import (
 	"strings"
 )
 
-type Flags struct {
+type Args struct {
 	Gen			bool
+	Forward		[]string
 }
 
-func GetArgs() Flags {
+func GetArgs() Args {
 	argv := os.Args
 	argc := len(argv)
 
-	res := Flags{}
+	res := Args{}
 
 	for argi := 1; argi < argc; argi++ {
+		if argv[argi] == "--" {
+			res.Forward = argv[argi+1:]
+			break
+		}
+
 		if flag, ok := strings.CutPrefix(argv[argi], "--"); ok {
 			switch flag {
 			case "gen":

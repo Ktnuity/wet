@@ -33,7 +33,7 @@ func main() {
 
 			testutil.Printf("Testing %s <lightgray>|<reset> ", stepName)
 
-			res, ok := test.RunFile(step)
+			res, ok := test.RunFile(step, args.Forward)
 			result = append(result, res...)
 
 			if !ok {

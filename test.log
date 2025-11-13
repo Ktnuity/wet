@@ -1,4 +1,4 @@
-Test 0 | demo/typecheck/init.wet
+Test 0 | tests/typecheck/init.wet
 69
 35
 Ans: 69
@@ -26,7 +26,7 @@ total: 10
 3: 6
 4: 10
 total: 10
-Test 1 | demo/arithmetics/init.wet
+Test 1 | tests/arithmetics/init.wet
 test segment: boolean
 testing &&
 ok
@@ -161,7 +161,7 @@ ok
 ok
 
 verdict: ok
-Test 2 | demo/langtest/init.wet
+Test 2 | tests/langtest/init.wet
 Test 0
 Result: 1
 Match:  1
@@ -178,7 +178,7 @@ Test 3
 Result: 6857
 Match:  6857
 Verdict: Success
-Test 3 | demo/proc/init.wet
+Test 3 | tests/proc/init.wet
 fib
 0: 0
 1: 1
@@ -196,7 +196,7 @@ fib
 13: 233
 14: 377
 done
-Test 4 | demo/resource/init.wet
+Test 4 | tests/resource/init.wet
 test segment: basic
 testing relative
 ok
@@ -217,7 +217,7 @@ ok
 ok
 
 verdict: ok
-Test 5 | demo/tests/std.wet
+Test 5 | tests/tests/std.wet
 test indent
 Result:     foo
 Match:      foo
@@ -230,7 +230,7 @@ test nindent 3
 Result:             foo
 Match:              foo
 Verdict: Success
-Test 6 | demo/tokens/init.wet
+Test 6 | tests/tokens/init.wet
 ] cleaning up old files.
 ] running main token test.
 ] downloading license.
@@ -257,7 +257,7 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ] running last cleanup.
 ] removing: license.txt
-Test 7 | demo/tools/init.wet
+Test 7 | tests/tools/init.wet
 ] downloading license...
 ] download success.
 ] license downloaded:
@@ -280,7 +280,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ] license file removed.
-Test 8 | demo/untilunless/init.wet
+Test 8 | tests/untilunless/init.wet
 testing if
 testing true if
 ok
@@ -304,7 +304,7 @@ testing until sum(1,5)
 ok
 
 verdict: ok
-Test 9 | demo/zip/init.wet
+Test 9 | tests/zip/init.wet
 ] cleaning up old files and setting up pre-requisites.
 ] running main zip test.
 ] downloading zip.
