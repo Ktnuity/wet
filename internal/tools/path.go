@@ -87,7 +87,7 @@ func fixPath(path string) (string, error) {
 			return "", fmt.Errorf("failed to fix token '%s': %w", path, err)
 		}
 
-		fullPath := wetDir + "/" + path
+		fullPath := wetDir + "/" + path[1:]
 		parent := filepath.Dir(fullPath)
 
 		if err := os.MkdirAll(parent, 0755); err != nil {
