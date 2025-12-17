@@ -40,14 +40,14 @@ proc nindent string in string int do
     "@nindent" sload
 end
 
-macro iputs
+proc iputs in string do
     indent puts
 end
 
-macro niputs
+proc niputs in string int do
     nindent puts
 end
 
-macro putln
+proc putln in string do
     "\n" + puts
 end

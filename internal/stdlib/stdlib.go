@@ -1,7 +1,6 @@
 package stdlib
 
-//go:generate rm -rf ./std
-//go:generate cp -r ../../wetstd ./std
+//go:generate go run ../../cmd/genstd/main.go
 
 import (
 	"embed"

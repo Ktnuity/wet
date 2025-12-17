@@ -1,7 +1,8 @@
-macro wet_version "v0.1.0" end
-macro wet_name "wet" end
-macro wet_license "MIT License" end
-macro wet_copy "Kirdow" end
-macro wet_copy_year "2025" end
-macro wet_org "Ktnuity" end
-macro wet_url "https://github.com/" wet_org + "/" + wet_name + end
+# TODO: Replace these with `const`
+proc wet_version string do "v0.1.0" end
+proc wet_name string do "wet" end
+proc wet_license string do "MIT License" end
+proc wet_copy string do "Kirdow" end
+proc wet_copy_year string do "2025" end
+proc wet_org string do "Ktnuity" end
+proc wet_url string do "https://github.com/" wet_org + "/" + wet_name + end

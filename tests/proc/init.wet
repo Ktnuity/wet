@@ -1,3 +1,5 @@
+# fib x<=1 = x
+# fix < = fib x-1 + fib x-2
 proc fib int in int do
     dup 1 > if
         dup -- fib
@@ -6,13 +8,14 @@ proc fib int in int do
     end
 end
 
+# runs fib and print "input: output"
 proc try_fib in int do
     dup tostring ": " + swap fib + "\n" + puts
-#dup tostring ": " + swap "\n" + puts
 end
 
 "fib\n" puts
 
+# run fib for 0 to 14
 0 while dup 15 < do
     dup try_fib
     ++

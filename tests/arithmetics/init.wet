@@ -1,0 +1,239 @@
+# Evaluated during successful test case
+proc ok do
+    "ok\n" puts
+end
+
+# Evaluated during failed test case
+proc fail do
+    "fails" iload
+    ++ "fails" store
+
+    "fail\n" puts
+end
+
+# Evaluates and prints the final verdict
+proc verdict do
+    "fails" iload
+    dup 0 = if
+        "\nverdict: ok\n" puts drop
+    else
+        "\nverdict: fail (failed " swap + " times)\n" + puts
+    end
+end
+
+# Prints a test section to the screen
+proc test in string do
+    "testing " swap + "\n" + puts
+end
+
+# Prints a test category to the screen
+proc beg in string do
+    "test segment: " swap + "\n" + puts
+end
+
+# Test if a value is truthy
+proc truthy in int do
+    if
+        ok
+    else
+        fail
+    end
+end
+
+# Test if a value is falsy
+proc falsy in int do
+    unless
+        ok
+    else
+        fail
+    end
+end
+
+# Test if two ints are equal
+proc ieq in int int do
+    = truthy
+end
+
+# Test if two strings are equal
+proc seq in string string do
+    = truthy
+end
+
+# Test if two ints are inequal
+proc ineq in int int do
+    = falsy
+end
+
+# Test if two string are inequal
+proc sneq in string string do
+    = falsy
+end
+
+# Test start
+0 "fails" store
+
+# Test boolean operators
+"boolean" beg
+
+"&&" test
+0 0 && falsy
+0 1 && falsy
+1 0 && falsy
+1 1 && truthy
+
+"||" test
+0 0 || falsy
+0 1 || truthy
+1 0 || truthy
+1 1 || truthy
+
+# Test logical operators
+"logical" beg
+
+"=" test
+0 0 = truthy
+1 1 = truthy
+-5 -5 = truthy
+5 -5 = falsy
+-5 5 = falsy
+
+"hello" "hello" = truthy
+"foo" "bar" = falsy
+-5 tostring 5 tostring = falsy
+
+"!=" test
+0 0 != falsy
+1 1 != falsy
+-5 -5 != falsy
+5 -5 != truthy
+-5 5 != truthy
+
+"hello" "hello" != falsy
+"foo" "bar" != truthy
+-5 tostring 5 tostring != truthy
+
+"<" test
+0 0 < falsy
+0 1 < truthy
+1 0 < falsy
+1 1 < falsy
+"apple" "banana" < truthy
+"apple" "apple" < falsy
+"apple" "appel" < falsy
+"appel" "apple" < truthy
+
+">" test
+0 0 > falsy
+0 1 > falsy
+1 0 > truthy
+1 1 > falsy
+"apple" "banana" > falsy
+"apple" "apple" > falsy
+"banana" "apple" > truthy
+"appel" "apple" > falsy
+"apple" "appel" > truthy
+
+"<=" test
+0 0 <= truthy
+0 1 <= truthy
+1 0 <= falsy
+1 1 <= truthy
+"apple" "banana" <= truthy
+"apple" "apple" <= truthy
+"apple" "appel" <= falsy
+"appel" "apple" <= truthy
+
+">=" test
+0 0 >= truthy
+0 1 >= falsy
+1 0 >= truthy
+1 1 >= truthy
+"apple" "banana" >= falsy
+"apple" "apple" >= truthy
+"banana" "apple" >= truthy
+"appel" "apple" >= falsy
+"apple" "appel" >= truthy
+
+"!" test
+1 ! falsy
+0 ! truthy
+"" ! truthy
+"a" ! falsy
+
+# Test bitwise operators
+"bitwise" beg
+
+"&" test
+1 4 & 0 ieq
+1 4 & 5 ineq
+1 5 & 5 ineq
+1 5 & 1 ieq
+15 5 & 5 ieq
+
+"|" test
+1 4 | 5 ieq
+1 5 | 5 ieq
+8 4 | 2 1 | | 15 ieq
+
+"^" test
+1 1 ^ 0 ieq
+1 0 ^ 1 ieq
+0 1 ^ 1 ieq
+0 0 ^ 0 ieq
+7 5 ^ 2 ieq
+
+"~" test
+5 ~ 15 & 10 ieq
+0 ~ 15 & 15 ieq
+15 ~ 15 & 0 ieq
+
+# Test arithmetics operators
+"arithmetics" beg
+
+"+" test
+1 1 + 2 ieq
+1 9 + 10 ieq
+-3 10 + 7 ieq
+3 -10 + -7 ieq
+34 35 + 69 ieq
+
+"a" "b" + "ab" seq
+
+"-" test
+1 1 - 0 ieq
+9 9 - 0 ieq
+69 34 - 35 ieq
+100 200 - -100 ieq
+
+"/" test
+69 3 / 23 ieq
+333 3 / 111 ieq
+1000 3 / 333 ieq
+0 0 / 0 ieq
+
+"*" test
+5 5 * 25 ieq
+6 6 * 36 ieq
+0 0 * 0 ieq
+-1 -1 * 1 ieq
+
+"%" test
+15 3 % 0 ieq
+66 10 % 6 ieq
+1000 3 % 1 ieq
+
+"++" test
+15 ++ 16 ieq
+-1 ++ 0 ieq
+-999 ++ -998 ieq
+
+"--" test
+15 -- 14 ieq
+101 -- 100 ieq
+1 -- 0 ieq
+1 -- -- -1 ieq
+-1 -- -2 ieq
+-999 -- -1000 ieq
+
+# Print final verdict
+verdict

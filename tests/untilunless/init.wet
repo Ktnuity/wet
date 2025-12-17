@@ -1,8 +1,10 @@
-macro ok
+# Evaluated during successful test case
+proc ok do
     "ok\n" puts
 end
 
-macro fail
+# Evaluated during failed test case
+proc fail do
     "fails" iload
     1 +
     "fails" store
@@ -10,7 +12,8 @@ macro fail
     "fail\n" puts
 end
 
-macro verdict
+# Evaluates and prints the final verdict
+proc verdict do
     "fails" iload
 
     dup 0 = if
@@ -20,8 +23,12 @@ macro verdict
     end
 end
 
-macro test "testing " swap + "\n" + puts end
+# Prints a test section to the screen
+proc test in string do
+    "testing " swap + "\n" + puts
+end
 
+# Test start
 0 "fails" store
 
 "testing if\n" puts
