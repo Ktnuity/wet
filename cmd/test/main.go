@@ -71,13 +71,10 @@ func main() {
 	fmt.Printf("Test Done!\n")
 
 	if args.Gen {
+		testFile := test.GetTestFile()
 		fmt.Printf("Saving test...\n")
 		test := strings.Join(result, "\n")
-		logFile := "./test.log"
-		if runtime.GOOS == "windows" {
-			logFile = ".\\test.log"
-		}
-		os.WriteFile(logFile, []byte(test), 0644)
+		os.WriteFile(testFile, []byte(test), 0644)
 	}
 }
 

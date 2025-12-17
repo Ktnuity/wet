@@ -2,11 +2,20 @@ package test
 
 import (
 	"os"
+	"runtime"
 	"strings"
 )
 
+func GetTestFile() string {
+	fileName := "./test.log"
+	if runtime.GOOS == "windows" {
+		fileName = ".\\test.windows.log"
+	}
+	return fileName
+}
+
 func LoadTest() []string {
-	data, err := os.ReadFile("./test.log")
+	data, err := os.ReadFile(GetTestFile())
 	if err != nil {
 		return []string{}
 	}
