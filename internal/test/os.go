@@ -2,6 +2,7 @@ package test
 
 import (
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -11,7 +12,11 @@ func RunFile(path string, forward []string) ([]string, bool) {
 		args = append(args, path)
 	}
 	args = append(args, forward...)
-	cmd := exec.Command("./wet", args...)
+	executable := "./wet"
+	if runtime.GOOS == "windows" {
+		executable = ".\\wet.exe"
+	}
+	cmd := exec.Command(executable, args...)
 	output, err := cmd.Output()
 	if len(output) == 0 {
 		return []string{}, err == nil

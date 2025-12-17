@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/ktnuity/wet/internal/test"
@@ -17,6 +18,13 @@ func main() {
 	result := make([]string, 0, 8)
 	live := len(match) > 0 && !args.Gen
 
+	executable := "./wet"
+	testExec := "./test"
+	if runtime.GOOS == "windows" {
+		executable = ".\\wet.exe"
+		testExec = ".\\test.exe"
+	}
+
 	if live || args.Gen {
 		printf := func(format string, args...any) {
 			result = append(result, fmt.Sprintf(format, args...))
@@ -25,9 +33,9 @@ func main() {
 		for idx, step := range tests {
 			stepName := step 
 			if strings.HasPrefix(step, "--") {
-				stepName = "./wet " + step
+				stepName = fmt.Sprintf("%s %s", executable, step)
 			} else if len(step) == 0 {
-				stepName = "./wet"
+				stepName = executable
 			}
 			printf("Test %d | %s", idx, stepName)
 
@@ -56,7 +64,7 @@ func main() {
 			}
 		}
 	} else {
-		fmt.Printf("No tests found.\nGenerate tests with ./test --gen\n")
+		fmt.Printf("No tests found.\nGenerate tests with %s --gen\n", testExec)
 		os.Exit(1)
 	}
 
@@ -65,7 +73,11 @@ func main() {
 	if args.Gen {
 		fmt.Printf("Saving test...\n")
 		test := strings.Join(result, "\n")
-		os.WriteFile("./test.log", []byte(test), 0644)
+		logFile := "./test.log"
+		if runtime.GOOS == "windows" {
+			logFile = ".\\test.log"
+		}
+		os.WriteFile(logFile, []byte(test), 0644)
 	}
 }
 
