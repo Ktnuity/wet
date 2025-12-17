@@ -11,7 +11,7 @@ func ToolRemoveFile(res string) error {
 		return fmt.Errorf("failed to remove file %s: %w", res, err)
 	}
 
-	err = os.Remove(path)
+	err = os.RemoveAll(path)
 	if err != nil {
 		return fmt.Errorf("failed to remove file %s: %w", res, err)
 	}
