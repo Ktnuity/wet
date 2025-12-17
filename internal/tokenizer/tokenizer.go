@@ -304,7 +304,7 @@ func nextWord(scan *Scan, entry *int) *types.Word {
 
 		scan.scan.Content = ""
 		(*entry)++
-		return types.NewWord(str, scan.scan, *entry - 1)
+		return types.NewWord(strings.ReplaceAll(str, "\\", ""), scan.scan, *entry - 1)
 	}
 
 	parts := strings.Fields(str)
