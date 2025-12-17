@@ -58,16 +58,22 @@ jobs:
         run: go version
 
       - name: Build - Generate
+        shell: cmd
         run: go generate ./...
       - name: Build - Tidy
+        shell: cmd
         run: go mod tidy
       - name: Build - Vet
+        shell: cmd
         run: go vet ./...
       - name: Build CLI
+        shell: cmd
         run: go build -o wet.exe cmd/cli/main.go
       - name: Build Test
+        shell: cmd
         run: go build -o test.exe cmd/test/main.go
 
       - name: Test Wet
+        shell: cmd
         run: |
           test.exe
