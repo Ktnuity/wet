@@ -316,8 +316,8 @@ This is in foo.txt
 ] content of second file:
 This is in bar.txt
 ] running last cleanup.
-] removing: root\foo.txt
-] removing: root\bar.txt
+] removing: root/foo.txt
+] removing: root/bar.txt
 ] removing: root
 Test 10 | ./wet --help
 wet is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.
