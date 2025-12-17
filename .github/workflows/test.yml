@@ -1,0 +1,67 @@
+name: Test Wet
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+      - tests
+    paths:
+      - '**'
+      - '.github/workflows/**'
+
+jobs:
+  test-linux:
+    name: Test Linux
+    runs-on: [Linux, ktnuity-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.3'
+
+      - name: Validate Go
+        run: go version
+
+      - name: Build Wet
+        run: |
+          go mod tidy
+          go vet ./...
+          go generate ./...
+          go build -o wet cmd/cli/main.go
+          go build -o test cmd/test/main.go
+
+      - name: Test Wet
+        run: |
+          chmod +x ./test
+          ./test
+
+  test-windows:
+    name: Test Windows
+    runs-on: [Windows]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.3'
+
+      - name: Validate Go
+        run: go version
+
+      - name: Build Wet
+        run: |
+          go mod tidy
+          go vet ./...
+          go generate ./...
+          go build -o wet.exe cmd/cli/main.go
+          go build -o test.exe cmd/test/main.go
+
+      - name: Test Wet
+        run: |
+          text.exe
