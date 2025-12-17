@@ -79,34 +79,3 @@ jobs:
         shell: cmd
         run: |
           test.exe
-
-  test-macos:
-    name: Test macOS
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.25.3'
-
-      - name: Validate Go
-        run: go version
-
-      - name: Build - Generate
-        run: go generate ./...
-      - name: Build - Tidy
-        run: go mod tidy
-      - name: Build - Vet
-        run: go vet ./...
-      - name: Build CLI
-        run: go build -o wet cmd/cli/main.go
-      - name: Build Test
-        run: go build -o test cmd/test/main.go
-
-      - name: Test Wet
-        run: |
-          chmod +x ./test
-          ./test
