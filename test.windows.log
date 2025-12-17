@@ -319,7 +319,7 @@ This is in bar.txt
 ] removing: root/foo.txt
 ] removing: root/bar.txt
 ] removing: root
-Test 10 | ./wet --help
+Test 10 | .\wet.exe --help
 wet is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.
 It's:
   - At some points a pre-build.
@@ -344,7 +344,7 @@ For more info, see: https://github.com/Ktnuity/wet
 Released under MIT License: https://github.com/Ktnuity/wet/blob/master/LICENSE
 
 Copyright (c) 2025 Kirdow
-Test 11 | ./wet --license
+Test 11 | .\wet.exe --license
 wet is released under MIT License
 
 Copyright (c) 2025 Kirdow
@@ -365,11 +365,11 @@ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
 OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
-Test 12 | ./wet --version
+Test 12 | .\wet.exe --version
 wet v0.1.0
 Copyright (c) 2025 Kirdow
 Released under MIT License.
-Test 13 | ./wet
+Test 13 | .\wet.exe
 wet v0.1.0
 Copyright (c) 2025 Kirdow
 Released under MIT License.
