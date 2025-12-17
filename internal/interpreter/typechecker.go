@@ -1119,7 +1119,6 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 		}
 
 		d.base.typeStack.Push(types.ValueTypeInt)
-		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("exist", types.TokenTypeKeyword) {
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
