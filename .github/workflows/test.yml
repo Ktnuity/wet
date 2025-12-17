@@ -13,7 +13,7 @@ on:
 jobs:
   test-linux:
     name: Test Linux
-    runs-on: [Linux, ktnuity-tests]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -41,7 +41,7 @@ jobs:
 
   test-windows:
     name: Test Windows
-    runs-on: [Windows]
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -64,4 +64,4 @@ jobs:
 
       - name: Test Wet
         run: |
-          text.exe
+          test.exe
