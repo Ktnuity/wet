@@ -373,4 +373,4 @@ Test 13 | .\wet.exe
 wet v0.1.0
 Copyright (c) 2025 Kirdow
 Released under MIT License.
-Usage: wet [options] <file>
+Usage: wet.exe [options] <file>
