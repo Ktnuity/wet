@@ -26,13 +26,16 @@ jobs:
       - name: Validate Go
         run: go version
 
-      - name: Build Wet
-        run: |
-          go generate ./...
-          go mod tidy
-          go vet ./...
-          go build -o wet cmd/cli/main.go
-          go build -o test cmd/test/main.go
+      - name: Build - Generate
+        run: go generate ./...
+      - name: Build - Tidy
+        run: go mod tidy
+      - name: Build - Vet
+        run: go vet ./...
+      - name: Build CLI
+        run: go build -o wet cmd/cli/main.go
+      - name: Build Test
+        run: go build -o test cmd/test/main.go
 
       - name: Test Wet
         run: |
@@ -54,13 +57,16 @@ jobs:
       - name: Validate Go
         run: go version
 
-      - name: Build Wet
-        run: |
-          go generate ./...
-          go mod tidy
-          go vet ./...
-          go build -o wet.exe cmd/cli/main.go
-          go build -o test.exe cmd/test/main.go
+      - name: Build - Generate
+        run: go generate ./...
+      - name: Build - Tidy
+        run: go mod tidy
+      - name: Build - Vet
+        run: go vet ./...
+      - name: Build CLI
+        run: go build -o wet.exe cmd/cli/main.go
+      - name: Build Test
+        run: go build -o test.exe cmd/test/main.go
 
       - name: Test Wet
         run: |
