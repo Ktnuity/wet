@@ -12,8 +12,20 @@ import (
 
 type ExitCallback = func()
 
-func singleLine(name, content string) (string, *types.SourceSnippet) {
+func split(content string) []string {
 	lines := strings.Split(content, "\n")
+	for idx := range len(lines) {
+		if strings.HasSuffix(lines[idx], "\r") {
+			line := lines[idx]
+			lines[idx] = line[:len(line)-1]
+		}
+	}
+
+	return lines
+}
+
+func singleLine(name, content string) (string, *types.SourceSnippet) {
+	lines := split(content)
 	snippet := &types.SourceSnippet{
 		Name: name,
 		Start: 1,
@@ -94,7 +106,7 @@ func loadFile(path string) (*types.SourceSnippet, error) {
 		return nil, err
 	}
 
-	lines := strings.Split(strings.TrimSuffix(string(data), "\n"), "\n")
+	lines := split(strings.TrimSuffix(string(data), "\n"))
 
 	snippet := &types.SourceSnippet{
 		Name: path,
