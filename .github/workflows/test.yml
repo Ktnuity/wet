@@ -3,8 +3,7 @@ name: Test Wet
 on:
   push:
     branches:
-      - master
-      - dev
+      - '*'
     paths:
       - '**'
       - '.github/workflows/**'
@@ -25,6 +24,12 @@ jobs:
       - name: Validate Go
         run: go version
 
+      - name: Build - Pre-requisites
+        run: |
+          if [[ ! -d "./bin" ]]; then
+            mkdir ./bin
+          fi
+
       - name: Build - Generate
         run: go generate ./...
       - name: Build - Tidy
@@ -32,14 +37,14 @@ jobs:
       - name: Build - Vet
         run: go vet ./...
       - name: Build CLI
-        run: go build -o wet cmd/cli/main.go
+        run: go build -o bin/wet cmd/cli/main.go
       - name: Build Test
-        run: go build -o test cmd/test/main.go
+        run: go build -o bin/test cmd/test/main.go
 
       - name: Test Wet
         run: |
-          chmod +x ./test
-          ./test
+          chmod +x ./bin/test
+          ./bin/test
 
   test-windows:
     name: Test Windows
@@ -59,6 +64,11 @@ jobs:
       - name: Validate Go
         run: go version
 
+      - name: Build - Pre-requisites
+        shell: cmd
+        run: |
+          if not exist bin mkdir bin
+
       - name: Build - Generate
         shell: cmd
         run: go generate ./...
@@ -70,15 +80,15 @@ jobs:
         run: go vet ./...
       - name: Build CLI
         shell: cmd
-        run: go build -o wet.exe cmd/cli/main.go
+        run: go build -o bin\wet.exe cmd/cli/main.go
       - name: Build Test
         shell: cmd
-        run: go build -o test.exe cmd/test/main.go
+        run: go build -o bin\test.exe cmd/test/main.go
 
       - name: Test Wet
         shell: cmd
         run: |
-          test.exe
+          bin\test.exe
 
   test-macos:
     name: Test macOS
@@ -95,6 +105,12 @@ jobs:
       - name: Validate Go
         run: go version
 
+      - name: Build - Pre-requisites
+        run: |
+          if [[ ! -d "./bin" ]]; then
+            mkdir ./bin
+          fi
+
       - name: Build - Generate
         run: go generate ./...
       - name: Build - Tidy
@@ -102,11 +118,11 @@ jobs:
       - name: Build - Vet
         run: go vet ./...
       - name: Build CLI
-        run: go build -o wet cmd/cli/main.go
+        run: go build -o bin/wet cmd/cli/main.go
       - name: Build Test
-        run: go build -o test cmd/test/main.go
+        run: go build -o bin/test cmd/test/main.go
 
       - name: Test Wet
         run: |
-          chmod +x ./test
-          ./test
+          chmod +x ./bin/test
+          ./bin/test
