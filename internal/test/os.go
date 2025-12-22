@@ -12,9 +12,9 @@ func RunFile(path string, forward []string) ([]string, bool) {
 		args = append(args, path)
 	}
 	args = append(args, forward...)
-	executable := "./wet"
+	executable := "./bin/wet"
 	if runtime.GOOS == "windows" {
-		executable = ".\\wet.exe"
+		executable = ".\\bin\\wet.exe"
 	}
 	cmd := exec.Command(executable, args...)
 	output, err := cmd.Output()

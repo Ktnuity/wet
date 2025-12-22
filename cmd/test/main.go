@@ -13,7 +13,11 @@ import (
 func main() {
 	args := test.GetArgs()
 	tests := test.GetTests()
-	match := test.LoadTest()
+	match, err := test.LoadTest()
+	if err != nil {
+		fmt.Printf("Failed to load test: %v\n", err)
+		os.Exit(1)
+	}
 
 	result := make([]string, 0, 8)
 	live := len(match) > 0 && !args.Gen
@@ -71,7 +75,12 @@ func main() {
 	fmt.Printf("Test Done!\n")
 
 	if args.Gen {
-		testFile := test.GetTestFile()
+		testFile, err := test.GetTestFile()
+		if err != nil {
+			fmt.Printf("Failed to get test file for gen saving: %v\n", err)
+			os.Exit(1)
+		}
+
 		fmt.Printf("Saving test...\n")
 		test := strings.Join(result, "\n")
 		os.WriteFile(testFile, []byte(test), 0644)
