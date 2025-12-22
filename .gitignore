@@ -1,8 +1,5 @@
 # Build
-/wet
-/wet.exe
-/test
-/test.exe
+bin/
 
 # Wet
 /.wet/
