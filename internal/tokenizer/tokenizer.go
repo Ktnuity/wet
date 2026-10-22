@@ -153,7 +153,8 @@ func stripComments(src *types.Source) {
 	for _, snippet := range src.Snippets {
 		filtered := make([]*types.SourceLine, 0, len(snippet.Lines))
 		for _, line := range snippet.Lines {
-			if !strings.HasPrefix(line.Content, "#") && !strings.HasPrefix(line.Content, "//") {
+			trimmedLine := strings.TrimSpace(line.Content)
+			if !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//") {
 				filtered = append(filtered, line)
 			}
 		}
@@ -363,7 +364,7 @@ var symbols = map[string]bool{
 	"&": true, "|": true, "^": true, "~": true,
 	"&&": true, "||": true,
 	"=": true, "!=": true, "<": true, "<=": true, ">": true, ">=": true, "!": true,
-	".": true,
+	".": true, ",": true,
 }
 
 func isSymbol(word *types.Word) bool {

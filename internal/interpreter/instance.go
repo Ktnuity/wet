@@ -1,7 +1,9 @@
 package interpreter
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 
 	"github.com/ktnuity/wet/internal/types"
 	"github.com/ktnuity/wet/internal/util"
@@ -15,6 +17,7 @@ type Interpreter struct {
 	ip			int
 	eop			int
 	calls		util.Stack[int]
+	reader		*bufio.Reader
 }
 
 func CreateNew(tokens []types.Token) (*Interpreter, error) {
@@ -33,6 +36,7 @@ func CreateNew(tokens []types.Token) (*Interpreter, error) {
 		ip: 0,
 		eop: int(len(result.inst)),
 		calls: util.Stack[int]{},
+		reader: bufio.NewReader(os.Stdin),
 	}
 
 	tcd := &TypeCheckData{

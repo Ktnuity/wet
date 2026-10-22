@@ -2,6 +2,9 @@ package interpreter
 
 import (
 	"fmt"
+	"io"
+	"strconv"
+	"strings"
 
 	"github.com/ktnuity/wet/internal/types"
 )
@@ -43,6 +46,31 @@ func (ip *Interpreter) StepPrint(d *StepData) *StepResult {
 		ip.runtimev("popped \"%s\"\n", s1)
 
 		fmt.Printf("%s", s1)
+	} else if d.token.Equals(",", types.TokenTypeSymbol) {
+		var result *int = nil
+		for result == nil {
+			ip.runtimev("reading value.\n")
+			line, err := ip.reader.ReadString('\n')
+			if err != nil && err != io.EOF {
+				return ip.runtimeverr("Failed to run step. readint operator failed. failed to read input: %v\n", err)
+			}
+
+			line = strings.TrimSpace(line)
+			if len(line) == 0 {
+				continue
+			}
+
+			i, err := strconv.ParseInt(line, 10, 32)
+			if err != nil {
+				continue
+			}
+
+			tmp := int(i)
+			result = &tmp
+		}
+
+		ip.ipush(*result)
+		ip.runtimev("pushed %d\n", *result)
 	} else {
 		return nil
 	}

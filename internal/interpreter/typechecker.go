@@ -231,6 +231,8 @@ func typeCheckPrint(d *TypeCheckSubData) (*TypeResult, error) {
 		if t1 != types.ValueTypeString {
 			p.ExpectType(t1.Format(), "string")
 		}
+	} else if d.token.Equals(",", types.TokenTypeSymbol) {
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else {
 		return typeNext()
 	}
