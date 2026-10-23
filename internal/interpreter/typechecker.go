@@ -701,6 +701,15 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 			p.ExpectNameTypeCause(preview.cause.Token.Word, "while", "until")
 		}
 
+		if d.base.typeStack.Len() < 1 {
+			p.Empty()
+		}
+
+		_, ok := d.base.typeStack.Pop()
+		if !ok {
+			p.GetValue(0)
+		}
+
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("end", types.TokenTypeKeyword) {
 		preview := popStack(d.base)
