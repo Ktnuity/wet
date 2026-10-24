@@ -29,6 +29,6 @@ func main() {
 	}
 
 	err = app.EntryPoint(src, args)
-	util.ExitWithError(err, util.AsRef("Runtime failure"))
+	util.ExitWithError(err, nil)
 }
 

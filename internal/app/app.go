@@ -18,7 +18,7 @@ func EntryPoint(src *types.Source, args *types.WetArgs) error {
 	tokenizer.SubmitFlags(args.Flags)
 	tokens, err := tokenizer.TokenizeCode(src)
 	if err != nil {
-		return fmt.Errorf("failed to init wet: %w", err)
+		return types.MakeError(fmt.Errorf("failed to init wet: %w", err))
 	}
 
 	if util.HasFlag(args.Flags, types.WetFlagVerboseTokenize) {
@@ -30,16 +30,16 @@ func EntryPoint(src *types.Source, args *types.WetArgs) error {
 
 	intr, err := interpreter.CreateNew(tokens)
 	if err != nil {
-		fmt.Printf("Failed to init interpreter: %v\n", err)
+		return types.MakeError(err)
 	}
 
 	status, err := intr.Run()
 	if err != nil {
-		return fmt.Errorf("error running wet: %v", err)
+		return &types.RuntimeError{ Err: err }
 	}
 
 	if !status {
-		return fmt.Errorf("error running wet.")
+		return types.MakeError(fmt.Errorf("error running wet."))
 	}
 
 	return nil

@@ -2,7 +2,9 @@ package interpreter
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/ktnuity/wet/internal/errors"
 	"github.com/ktnuity/wet/internal/types"
 	"github.com/ktnuity/wet/internal/util"
 )
@@ -157,6 +159,42 @@ func expandMacros(tokens []types.Token) ([]types.Token, error) {
 	return tokens, nil
 }
 
+func tokenProcessError(inst *Instruction, format string, args...any) error {
+	if inst == nil {
+		return fmt.Errorf(format, args...)
+	}
+
+	var traceLines []string
+	if inst != nil {
+		traceLines = errors.Trace(inst.Token.Word)
+	} else {
+		traceLines = make([]string, 0, 0)
+	}
+
+
+	lines := make([]string, 0, len(traceLines) + 8)
+	lines = append(lines, "Token processing failed!")
+	if inst != nil {
+		lines = append(lines, fmt.Sprintf("Token: %s", inst.Token.Word.UnwrapName()))
+		for _, line := range traceLines {
+			lines = append(lines, fmt.Sprintf(" %s", line))
+		}
+		lines = append(lines, "")
+	}
+	lines = append(lines, fmt.Sprintf(format, args...))
+
+	var sb strings.Builder
+	for i, line := range lines {
+		if i > 0 {
+			sb.WriteString("\n")
+		}
+
+		sb.WriteString(line)
+	}
+
+	return fmt.Errorf("%v", sb.String())
+}
+
 func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 	tokens, err := expandMacros(tokens)
 
@@ -167,6 +205,8 @@ func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 	ipStack := &util.Stack[int64]{}
 
 	procs := make(map[string]Proc)
+
+	var lastInstruction *Instruction = nil
 
 	instructions := CreateInstructions(tokens)
 	for idx := range int64(len(instructions)) {
@@ -181,12 +221,12 @@ func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 		} else if instruction.Token.Equals("else", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
 			if !ok {
-				return nil, fmt.Errorf("failed to process instruction. else reached without ip-stack at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. else reached without ip-stack at index %d", idx)
 			}
 
 			other := &instructions[ip]
 			if !other.Token.Equals("if", types.TokenTypeKeyword) && !other.Token.Equals("unless", types.TokenTypeKeyword) {
-				return nil, fmt.Errorf("failed to process instruction. else reached without if at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. else reached without if at index %d", idx)
 			}
 
 			other.Next = idx + 1
@@ -197,12 +237,12 @@ func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 		} else if instruction.Token.Equals("do", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
 			if !ok {
-				return nil, fmt.Errorf("failed to process instruction. do reached without ip-stack at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. do reached without ip-stack at index %d", idx)
 			}
 
 			other := &instructions[ip]
 			if !other.Token.Equals("while", types.TokenTypeKeyword) && !other.Token.Equals("until", types.TokenTypeKeyword){
-				return nil, fmt.Errorf("failed to process instruction. do reached without while or until at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. do reached without while or until at index %d", idx)
 			}
 
 			ipStack.Push(idx);
@@ -215,7 +255,7 @@ func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 		} else if instruction.Token.Equals("end", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
 			if !ok {
-				return nil, fmt.Errorf("failed to process instruction. end reached without ip-stack at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. end reached without ip-stack at index %d", idx)
 			}
 
 			instruction.Mode = EndModeNormal
@@ -241,13 +281,15 @@ func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 					other.Token,
 				}
 			} else {
-				return nil, fmt.Errorf("failed to process instruction. end reached without if or else at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. end reached without if or else at index %d", idx)
 			}
 		}
+
+		lastInstruction = instruction
 	}
 
 	if ipStack.Len() > 0 {
-		return nil, fmt.Errorf("failed to process instruction. process ended with ip-stack size %d. empty required.", ipStack.Len())
+		return nil, tokenProcessError(lastInstruction, "failed to process instruction. process ended with ip-stack size %d. empty required.", ipStack.Len())
 	}
 
 	return &ProcessTokensResult{

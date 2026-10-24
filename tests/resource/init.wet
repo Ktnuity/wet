@@ -54,7 +54,7 @@ proc seq in string string do
     = truthy
 end
 
-proc test_path int in path string do
+proc test_path in path string do
     swap tostring seq
 end
 

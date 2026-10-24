@@ -6,7 +6,7 @@ import (
 )
 
 func ToolRemoveFile(res string) error {
-	path, err := fixPath(res)
+	path, err := fixPath(res, RejectRoot)
 	if err != nil {
 		return fmt.Errorf("failed to remove file %s: %w", res, err)
 	}

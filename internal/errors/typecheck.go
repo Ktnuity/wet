@@ -17,7 +17,7 @@ func BadTypeCheck(operator *types.Word, info...string) {
 	fmt.Printf("Type Checker Failed!\n")
 	fmt.Printf("Operator: %s\n", operator.UnwrapName())
 
-	traceLines := trace(operator)
+	traceLines := Trace(operator)
 
 	lines := make([]string, 0, len(info) + len(traceLines) + 1)
 
@@ -56,7 +56,7 @@ func (p *PreparedTypeCheck) Empty() {
 }
 
 func (p *PreparedTypeCheck) Stack(expect, actual int) {
-	if expect <= 1 {
+	if expect < 1 {
 		p.Empty()
 	}
 
@@ -201,11 +201,11 @@ func (p *PreparedTypeCheck) CallLeavingError(name string, err error) {
 func (p *PreparedTypeCheck) withTrace(word *types.Word, info...string) {
 	result := make([]string, 0, 8)
 	result = append(result, info...)
-	result = append(result, trace(word)...)
+	result = append(result, Trace(word)...)
 	p.Throw(result...)
 }
 
-func trace(word *types.Word) []string {
+func Trace(word *types.Word) []string {
 	result := make([]string, 0, 8)
 
 	result = append(result, fmt.Sprintf("at %s:%d:%d:", word.LineFile(), word.LineNumber(), word.EntryNumber()))

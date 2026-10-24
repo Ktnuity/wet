@@ -11,7 +11,7 @@ func (ip *Interpreter) StepLiteral(d *StepData) *StepResult {
 	if d.token.Equals("", types.TokenTypeNumber) {
 		num, ok := d.token.GetNumberValue()
 		if !ok {
-			return ip.runtimeverr("failed to run step. token at index %d is has invalid number\n", ip.ip)
+			return ip.runtimeverr(d, "failed to run step. token at index %d is has invalid number\n", ip.ip)
 		}
 
 		ip.runtimev("pushing %d\n", num)
@@ -22,7 +22,7 @@ func (ip *Interpreter) StepLiteral(d *StepData) *StepResult {
 	} else if d.token.Equals("", types.TokenTypeString) {
 		str, ok := d.token.GetStringValue()
 		if !ok {
-			return ip.runtimeverr("failed to run step. token at index %d has invalid string\n", ip.ip)
+			return ip.runtimeverr(d, "failed to run step. token at index %d has invalid string\n", ip.ip)
 		}
 
 		ip.runtimev("pushing \"%s\"\n", strings.ReplaceAll(str, "\n", "\\n"))
@@ -33,7 +33,7 @@ func (ip *Interpreter) StepLiteral(d *StepData) *StepResult {
 	} else if d.token.Equals("", types.TokenTypePath) {
 		str, ok := d.token.GetPathValue()
 		if !ok {
-			return ip.runtimeverr("failed to run step. token at index %d has invalid path\n", ip.ip)
+			return ip.runtimeverr(d, "failed to run step. token at index %d has invalid path\n", ip.ip)
 		}
 
 		ip.runtimev("pushing path(%s)\n", str)

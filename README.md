@@ -177,7 +177,7 @@ When a task downloads to a file, it would need an absolute file in relation to y
   - `<src>` expects any resource location.
   - loads the file into memory.
     - `<src>` is consumed.
-    - pushes `<data> true` if successful, `false` if unsuccessful.
+    - pushes `<data> true` if successful, `"" false` if unsuccessful.
       - `<data>` is a string containing file content.
       - fails if file is binary.
 - `<src> <dst> move`

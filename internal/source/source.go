@@ -69,7 +69,12 @@ func Load(args *types.WetArgs) (*types.Source, ExitCallback) {
 	} else {
 		sourcePath = *args.Path
 
-		lastIndex := strings.LastIndex(strings.ReplaceAll(sourcePath, "\\", "/"), "/")
+		sourcePath = strings.ReplaceAll(sourcePath, "\\", "/")
+		if !strings.Contains(sourcePath, "/") {
+			sourcePath = fmt.Sprintf("./%s", sourcePath)
+		}
+
+		lastIndex := strings.LastIndex(sourcePath, "/")
 		dir := sourcePath[:lastIndex]
 		if dir != "" {
 			err = os.Chdir(dir)

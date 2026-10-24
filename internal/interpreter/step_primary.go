@@ -10,18 +10,18 @@ import (
 func (ip *Interpreter) StepPrimary(d *StepData) *StepResult {
 	if d.token.Equals("int", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr("failed to run step. int operator failed. stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. int operator failed. stack is empty.\n")
 		}
 
 		ip.runtimev("parsing string to int.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. int operator failed. failed to get value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. int operator failed. failed to get value: %v\n", err)
 		}
 
 		s1, ok := v1.String()
 		if !ok {
-			return ip.runtimeverr("failed to run step. int operator failed. value is not a string.\n")
+			return ip.runtimeverr(d, "failed to run step. int operator failed. value is not a string.\n")
 		}
 		ip.runtimev("popped \"%s\"\n", s1)
 
@@ -52,13 +52,13 @@ func (ip *Interpreter) StepPrimary(d *StepData) *StepResult {
 		}
 	} else if d.token.Equals("string", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr("failed to run step. string operator failed. stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. string operator failed. stack is empty.\n")
 		}
 
 		ip.runtimev("converting value to string.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. string operator failed. failed to get value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. string operator failed. failed to get value: %v\n", err)
 		}
 
 		if s1, ok := v1.String(); ok {

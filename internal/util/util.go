@@ -17,7 +17,8 @@ func ExitWithError(err error, message *string) {
 		if message != nil {
 			fmt.Printf("%s\n", *message)
 		}
-		fmt.Printf("Failure: %v\n", err)
+		// the err type itself should provide its newline.
+		fmt.Printf("%v", err)
 		os.Exit(1)
 	}
 }

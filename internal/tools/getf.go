@@ -6,7 +6,7 @@ import (
 )
 
 func ToolGetf(idx int, dir string) (string, error) {
-	path, err := fixPath(dir)
+	path, err := fixPath(dir, AllowRoot)
 	if err != nil {
 		return "", fmt.Errorf("failed to get file name in %s: %w", dir, err)
 	}

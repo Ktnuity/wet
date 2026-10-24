@@ -14,7 +14,7 @@ func (ip *Interpreter) Run() (bool, error) {
 	for ip.ip < ip.eop {
 		status, err := ip.Step()
 		if err != nil {
-			return false, fmt.Errorf("failed to run interpreter. interpreter step failed: %v", err)
+			return false, err
 		}
 
 		if !status {

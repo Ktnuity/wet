@@ -9,18 +9,18 @@ import (
 func (ip *Interpreter) StepBoolean(d *StepData) *StepResult {
 	if d.token.Equals("&&", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. && operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. && operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("logicaland top stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. && operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. && operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. && operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. && operator failed. failed to get second value: %v\n", err)
 		}
 
 		var truthy1 bool = false
@@ -56,18 +56,18 @@ func (ip *Interpreter) StepBoolean(d *StepData) *StepResult {
 		ip.runtimev("pushed %s\n", name)
 	} else if d.token.Equals("||", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. || operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. || operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("logicalor top stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. || operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. || operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. || operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. || operator failed. failed to get second value: %v\n", err)
 		}
 
 		var truthy1 bool = false

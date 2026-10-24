@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -71,6 +72,19 @@ func EscapePath(path string) string {
 	return sb.String()
 }
 
+var floatRegex = regexp.MustCompile(`^-?(\d+\.\d+|\.\d+)$`)
+var intRegex = regexp.MustCompile(`^-?(\d+)$`)
+func (word *Word) IsFloat() bool {
+	return floatRegex.MatchString(word.UnwrapName())
+}
+
+func (word *Word) IsInt() bool {
+	return intRegex.MatchString(word.UnwrapName())
+}
+
+func (word *Word) IsNumber() bool {
+	return word.IsFloat() || word.IsInt()
+}
 
 func (token *Token) Format() string {
 	if token == nil {

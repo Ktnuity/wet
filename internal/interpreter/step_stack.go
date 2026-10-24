@@ -9,13 +9,13 @@ import (
 func (ip *Interpreter) StepStack(d *StepData) *StepResult {
 	if d.token.Equals("dup", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr("failed to run step. dup operator failed. stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. dup operator failed. stack is empty.\n")
 		}
 
 		ip.runtimev("duplicate top stack value.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. dup operator failed. failed to get value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. dup operator failed. failed to get value: %v\n", err)
 		}
 
 		if s1, ok := v1.String(); ok {
@@ -57,13 +57,13 @@ func (ip *Interpreter) StepStack(d *StepData) *StepResult {
 		}
 	} else if d.token.Equals("drop", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr("failed to run step. drop operator failed. stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. drop operator failed. stack is empty.\n")
 		}
 
 		ip.runtimev("dropping top stack value.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. drop operator failed. failed to pop value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. drop operator failed. failed to pop value: %v\n", err)
 		}
 
 		if s1, ok := v1.String(); ok {
@@ -75,18 +75,18 @@ func (ip *Interpreter) StepStack(d *StepData) *StepResult {
 		}
 	} else if d.token.Equals("swap", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. swap operator failed. stack size is %d. 2 is required.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. swap operator failed. stack size is %d. 2 is required.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("swapping top two stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. swap operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. swap operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. swap operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. swap operator failed. failed to get second value: %v\n", err)
 		}
 
 		if s1, ok := v1.String(); ok {
@@ -130,13 +130,13 @@ func (ip *Interpreter) StepStack(d *StepData) *StepResult {
 		}
 	} else if d.token.Equals("over", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. over operator failed. stack size is %d. 2 is required.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. over operator failed. stack size is %d. 2 is required.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("pushing 2nd top-most value onto stack.\n")
 		v2, err := ip.peekOffset(1)
 		if err != nil {
-			return ip.runtimeverr("failed to run step. over operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. over operator failed. failed to get second value: %v\n", err)
 		}
 
 		if s2, ok := v2.String(); ok {
@@ -163,18 +163,18 @@ func (ip *Interpreter) StepStack(d *StepData) *StepResult {
 		}
 	} else if d.token.Equals("2dup", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. 2dup operator failed. stack size is %d. 2 is required.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. 2dup operator failed. stack size is %d. 2 is required.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("two-duping top stack values.\n")
 		v1, err := ip.peekOffset(1)
 		if err != nil {
-			return ip.runtimeverr("failed to run step. 2dup operator failed. failed to get first value: %v", err)
+			return ip.runtimeverr(d, "failed to run step. 2dup operator failed. failed to get first value: %v", err)
 		}
 
 		v2, err := ip.peekOffset(0)
 		if err != nil {
-			return ip.runtimeverr("failed to run step. 2dup operator failed. failed to get second value: %v", err)
+			return ip.runtimeverr(d, "failed to run step. 2dup operator failed. failed to get second value: %v", err)
 		}
 
 		if s1, ok := v1.String(); ok {
@@ -218,28 +218,28 @@ func (ip *Interpreter) StepStack(d *StepData) *StepResult {
 		}
 	} else if d.token.Equals("2swap", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 4 {
-			return ip.runtimeverr("failed to run step. 2swap operator failed. stack size is %d. 4 is reqired.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. 2swap operator failed. stack size is %d. 4 is reqired.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("two-swapping top stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. 2swap operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. 2swap operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. 2swap operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. 2swap operator failed. failed to get second value: %v\n", err)
 		}
 
 		v3, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. 2swap operator failed. failed to get third value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. 2swap operator failed. failed to get third value: %v\n", err)
 		}
 
 		v4, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. 2swap operator failed. failed to get fourth value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. 2swap operator failed. failed to get fourth value: %v\n", err)
 		}
 
 		if s1, ok := v1.String(); ok {

@@ -6,7 +6,7 @@ import (
 )
 
 func ToolLsd(dir string) (int64, error) {
-	path, err := fixPath(dir)
+	path, err := fixPath(dir, AllowRoot)
 	if err != nil {
 		return 0, fmt.Errorf("failed to list directory sub-dirs in %s: %w", dir, err)
 	}

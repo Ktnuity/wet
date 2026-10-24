@@ -12,6 +12,7 @@ import (
 type StackPreview struct {
 	stack			util.Stack[types.ValueType]
 	refStack		util.Stack[types.ValueType]
+	loopStack		util.Stack[types.ValueType]
 	cause			*Instruction
 	refCause		*Instruction
 }
@@ -31,12 +32,31 @@ func pushStack(data *TypeCheckData, inst *Instruction) {
 	})
 }
 
+func pushLoopStack(data *TypeCheckData, inst *Instruction, preview *StackPreview) {
+	data.typeStackStack.Push(StackPreview{
+		stack: data.typeStack.Clone(),
+		loopStack: preview.stack,
+		cause: inst,
+	})
+}
+
+func newStack(data *TypeCheckData, inst *Instruction) {
+	data.typeStackStack.Push(StackPreview{
+		stack: data.typeStack.Clone(),
+		cause: inst,
+	})
+
+	data.typeStack = util.Stack[types.ValueType]{}
+}
+
 func popStack(data *TypeCheckData) *StackPreview {
+	old := data.typeStack
 	preview, ok := data.typeStackStack.Pop()
 	if !ok {
 		return nil
 	}
 
+	preview.refStack = old
 	return &preview
 }
 
@@ -190,8 +210,13 @@ func typeBad(err error) (*TypeResult, error) {
 }
 
 func typeCheckLiteral(d *TypeCheckSubData) (*TypeResult, error) {
+	p := errors.PrepareTypeCheck(d.token.Word)
 	if d.token.Equals("", types.TokenTypeNumber) {
-		d.base.typeStack.Push(types.ValueTypeInt)
+		if d.token.Word.IsInt() {
+			d.base.typeStack.Push(types.ValueTypeInt)
+		} else {
+			p.Throw(fmt.Sprintf("Float literal is not currently supported."))
+		}
 	} else if d.token.Equals("", types.TokenTypeString) {
 		d.base.typeStack.Push(types.ValueTypeString)
 	} else if d.token.Equals("", types.TokenTypePath) {
@@ -257,6 +282,7 @@ func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
 		}
 
 		d.base.typeStack.Push(types.ValueTypeInt)
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else if d.token.Equals("string", types.TokenTypeKeyword) {
 		if d.base.typeStack.Len() < 1 {
 			p.Empty()
@@ -270,7 +296,7 @@ func typeCheckPrimary(d *TypeCheckSubData) (*TypeResult, error) {
 		if t1 == types.ValueTypeString {
 			d.base.typeStack.Push(types.ValueTypeString)
 		} else if t1 == types.ValueTypeInt {
-			d.base.typeStack.Push(types.ValueTypeInt)
+			d.base.typeStack.Push(types.ValueTypeString)
 		} else {
 			p.ExpectType(t1.Format(), "int", "string")
 		}
@@ -710,7 +736,7 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 			p.GetValue(0)
 		}
 
-		pushStack(d.base, d.inst)
+		pushLoopStack(d.base, d.inst, preview)
 	} else if d.token.Equals("end", types.TokenTypeKeyword) {
 		preview := popStack(d.base)
 		if preview == nil {
@@ -734,20 +760,22 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 				p.ConnectedTokenError("else", err)
 			}
 		} else if preview.cause.Token.Equals("do", types.TokenTypeKeyword) {
-			if err := compareStacks(d.base.typeStack, preview.stack); err != nil {
+			if err := compareStacks(d.base.typeStack, preview.loopStack); err != nil {
 				p.ConnectedTokenError("do", err)
 			}
+
+			d.base.typeStack = preview.stack.Clone()
 		} else if preview.cause.Token.Equals("proc", types.TokenTypeKeyword) {
 			out := preview.cause.Token.Extra.Proc.Out
-			if d.base.typeStack.Len() < len(out) {
-				p.Stack(len(out), d.base.typeStack.Len())
+			if preview.refStack.Len() < len(out) {
+				p.Stack(len(out), preview.refStack.Len())
 			}
 
-			if err := compareStacks(d.base.typeStack[d.base.typeStack.Len()-len(out):], out); err != nil {
+			if err := compareStacks(preview.refStack, out); err != nil {
 				p.ConnectedTokenError("proc", err)
 			}
 
-			d.base.typeStack = d.base.typeStack[:d.base.typeStack.Len()-len(out)]
+			d.base.typeStack = preview.stack
 
 			typecheckv("Exit proc %s\n", preview.cause.Token.Extra.Proc.Name.UnwrapName())
 		} else {
@@ -759,7 +787,7 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("proc", types.TokenTypeKeyword) {
 		p := errors.PrepareTypeCheck(d.token.Word)
-		pushStack(d.base, d.inst)
+		newStack(d.base, d.inst)
 
 		for _, inType := range d.inst.Token.Extra.Proc.In {
 			d.base.typeStack.Push(inType)
@@ -1377,6 +1405,30 @@ func typeCheckTools(d *TypeCheckSubData) (*TypeResult, error) {
 		}
 
 		d.base.typeStack.Push(types.ValueTypePath)
+	} else if d.token.Equals("move", types.TokenTypeKeyword) {
+		if d.base.typeStack.Len() < 2 {
+			p.Stack(2, d.base.typeStack.Len())
+		}
+
+		t1, ok := d.base.typeStack.Pop()
+		if !ok {
+			p.GetValue(0)
+		}
+
+		t2, ok := d.base.typeStack.Pop()
+		if !ok {
+			p.GetValue(1)
+		}
+
+		if t1 != types.ValueTypePath {
+			p.ExpectNameType("first value", t1.Format(), "path")
+		}
+
+		if t2 != types.ValueTypePath {
+			p.ExpectNameType("second value", t2.Format(), "path")
+		}
+
+		d.base.typeStack.Push(types.ValueTypeInt)
 	} else {
 		return typeNext()
 	}

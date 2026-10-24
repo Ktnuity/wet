@@ -257,6 +257,24 @@ func scanValid(scan *Scan, entry *int) bool {
 	return true
 }
 
+func unescapePath(str string) string {
+	var sb strings.Builder
+	sb.Grow(len(str))
+
+	escaped := false
+	for _, ch := range str {
+		if !escaped && ch == '\\' {
+			escaped = true
+			continue
+		}
+
+		sb.WriteRune(ch)
+		escaped = false
+	}
+
+	return sb.String()
+}
+
 func nextWord(scan *Scan, entry *int) *types.Word {
 	if !scanValid(scan, entry) {
 		return nil
@@ -299,13 +317,13 @@ func nextWord(scan *Scan, entry *int) *types.Word {
 			if str[i] == ' ' {
 				scan.scan.Content = strings.TrimSpace(str[i+1:])
 				(*entry)++
-				return types.NewWord(strings.ReplaceAll(str[:i], "\\", ""), scan.scan, *entry - 1)
+				return types.NewWord(unescapePath(str[:i]), scan.scan, *entry - 1)
 			}
 		}
 
 		scan.scan.Content = ""
 		(*entry)++
-		return types.NewWord(strings.ReplaceAll(str, "\\", ""), scan.scan, *entry - 1)
+		return types.NewWord(unescapePath(str), scan.scan, *entry - 1)
 	}
 
 	parts := strings.Fields(str)

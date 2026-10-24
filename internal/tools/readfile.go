@@ -6,7 +6,7 @@ import (
 )
 
 func ToolReadfile(src string) (string, error) {
-	path, err := fixPath(src)
+	path, err := fixPath(src, AllowRoot)
 	if err != nil {
 		return "", fmt.Errorf("failed to read file %s: %w", src, err)
 	}

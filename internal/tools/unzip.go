@@ -17,12 +17,12 @@ type ToolUnzipResult struct {
 func ToolUnzipFile(dst, res string) (ToolUnzipResult, error) {
 	var result ToolUnzipResult
 
-	pathRes, err := fixPath(res)
+	pathRes, err := fixPath(res, AllowRoot)
 	if err != nil {
 		return result, fmt.Errorf("failed to unzip file %s: %w", res, err)
 	}
 
-	pathDst, err := fixPath(dst)
+	pathDst, err := fixPath(dst, AllowRoot)
 	if err != nil {
 		return result, fmt.Errorf("failed to unzip file %s: %w", res, err)
 	}

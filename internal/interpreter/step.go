@@ -38,14 +38,14 @@ func (ip *Interpreter) newStep() (StepData, *StepResult) {
 	}
 
 	if ip.ip >= ip.eop {
-		return StepData{}, ip.runtimeverr("failed to run step. ip >= eop.")
+		return StepData{}, ip.runtimeverr(&StepData{}, "failed to run step. ip >= eop.")
 	}
 
 	inst := &ip.program[ip.ip]
 	token := inst.Token
 
 	if token == nil {
-		return StepData{}, ip.runtimeverr("failed to run step. token at index %d is nil\n", ip.ip)
+		return StepData{}, ip.runtimeverr(&StepData{}, "failed to run step. token at index %d is nil\n", ip.ip)
 	}
 
 	data := StepData{

@@ -25,7 +25,7 @@ func CreateNew(tokens []types.Token) (*Interpreter, error) {
 
 	result, err := ProcessTokens(tokens)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create interpreter: %w", err)
+		return nil, err
 	}
 
 	inst := &Interpreter{

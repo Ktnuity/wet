@@ -9,18 +9,18 @@ import (
 func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 	if d.token.Equals("=", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. = operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. = operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("equality-check top stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. = operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. = operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. = operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. = operator failed. failed to get second value: %v\n", err)
 		}
 
 		var result int = 0
@@ -59,18 +59,18 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 		ip.runtimev("pushed %s\n", name)
 	} else if d.token.Equals("!=", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. != operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. != operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("inequality-check top stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. != operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. != operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. != operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. != operator failed. failed to get second value: %v\n", err)
 		}
 
 		var result int = 1
@@ -109,18 +109,18 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 		ip.runtimev("pushed %s\n", name)
 	} else if d.token.Equals("<", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. < operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. < operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("less-check top stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. < operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. < operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. < operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. < operator failed. failed to get second value: %v\n", err)
 		}
 
 		var result int = 0
@@ -135,7 +135,7 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 					name = "true"
 				}
 			} else {
-				return ip.runtimeverr("failed to run step. < operator failed. cannot compare string and int.\n")
+				return ip.runtimeverr(d, "failed to run step. < operator failed. cannot compare string and int.\n")
 			}
 		} else if n1, ok := v1.Int(); ok {
 			if n2, ok := v2.Int(); ok {
@@ -146,7 +146,7 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 					name = "true"
 				}
 			} else {
-				return ip.runtimeverr("failed to run step. < operator failed. cannot compare int and string.\n")
+				return ip.runtimeverr(d, "failed to run step. < operator failed. cannot compare int and string.\n")
 			}
 		}
 
@@ -157,18 +157,18 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 		ip.runtimev("pushed %s\n", name)
 	} else if d.token.Equals(">", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. > operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. > operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("greater-check top stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. > operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. > operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. > operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. > operator failed. failed to get second value: %v\n", err)
 		}
 
 		var result int = 0
@@ -183,7 +183,7 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 					name = "true"
 				}
 			} else {
-				return ip.runtimeverr("failed to run step. > operator failed. cannot compare string and int.\n")
+				return ip.runtimeverr(d, "failed to run step. > operator failed. cannot compare string and int.\n")
 			}
 		} else if n1, ok := v1.Int(); ok {
 			if n2, ok := v2.Int(); ok {
@@ -194,7 +194,7 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 					name = "true"
 				}
 			} else {
-				return ip.runtimeverr("failed to run step. > operator failed. cannot compare int and string.\n")
+				return ip.runtimeverr(d, "failed to run step. > operator failed. cannot compare int and string.\n")
 			}
 		}
 
@@ -205,18 +205,18 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 		ip.runtimev("pushed %s\n", name)
 	} else if d.token.Equals("<=", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. <= operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. <= operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("lessorequal-check top stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. <= operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. <= operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. <= operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. <= operator failed. failed to get second value: %v\n", err)
 		}
 
 		var result int = 0
@@ -231,7 +231,7 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 					name = "true"
 				}
 			} else {
-				return ip.runtimeverr("failed to run step. <= operator failed. cannot compare string and int.\n")
+				return ip.runtimeverr(d, "failed to run step. <= operator failed. cannot compare string and int.\n")
 			}
 		} else if n1, ok := v1.Int(); ok {
 			if n2, ok := v2.Int(); ok {
@@ -242,7 +242,7 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 					name = "true"
 				}
 			} else {
-				return ip.runtimeverr("failed to run step. <= operator failed. cannot compare int and string.\n")
+				return ip.runtimeverr(d, "failed to run step. <= operator failed. cannot compare int and string.\n")
 			}
 		}
 
@@ -253,18 +253,18 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 		ip.runtimev("pushed %s\n", name)
 	} else if d.token.Equals(">=", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr("failed to run step. >= operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
+			return ip.runtimeverr(d, "failed to run step. >= operator failed. stack size is %d. 2 is reqired.\n", ip.stack.Len())
 		}
 
 		ip.runtimev("greaterorequal-check top stack values.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. >= operator failed. failed to get first value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. >= operator failed. failed to get first value: %v\n", err)
 		}
 
 		v2, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. >= operator failed. failed to get second value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. >= operator failed. failed to get second value: %v\n", err)
 		}
 
 		var result int = 0
@@ -279,7 +279,7 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 					name = "true"
 				}
 			} else {
-				return ip.runtimeverr("failed to run step. >= operator failed. cannot compare string and int.\n")
+				return ip.runtimeverr(d, "failed to run step. >= operator failed. cannot compare string and int.\n")
 			}
 		} else if n1, ok := v1.Int(); ok {
 			if n2, ok := v2.Int(); ok {
@@ -290,7 +290,7 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 					name = "true"
 				}
 			} else {
-				return ip.runtimeverr("failed to run step. >= operator failed. cannot compare int and string.\n")
+				return ip.runtimeverr(d, "failed to run step. >= operator failed. cannot compare int and string.\n")
 			}
 		}
 
@@ -301,13 +301,13 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 		ip.runtimev("pushed %s\n", name)
 	} else if d.token.Equals("!", types.TokenTypeSymbol) {
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr("failed to run step. ! operator failed. stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. ! operator failed. stack is empty.\n")
 		}
 
 		ip.runtimev("logicalnot top stack value.\n")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr("failed to run step. ! operator failed. failed to get value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. ! operator failed. failed to get value: %v\n", err)
 		}
 
 		var truthy bool = false

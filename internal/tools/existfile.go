@@ -6,7 +6,7 @@ import (
 )
 
 func ToolExistFile(res string) error {
-	path, err := fixPath(res)
+	path, err := fixPath(res, AllowRoot)
 	if err != nil {
 		return fmt.Errorf("failed to exists file %s: %w", res, err)
 	}
