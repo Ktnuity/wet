@@ -3,6 +3,7 @@ package source
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/ktnuity/wet/internal/stdlib"
@@ -151,7 +152,7 @@ func processSource(snippet *types.SourceSnippet, maxDepth int, args *types.WetAr
 		if strings.HasPrefix(line.Content, "@include ") {
 			fileName := line.Content[9:]
 
-			recSource, err := includeSource(fileName, args)
+			recSource, err := includeSource(filepath.Join(filepath.Dir(snippet.Name), fileName), args)
 			if err != nil {
 				return nil, fmt.Errorf("failed to load source: %v", err)
 			}

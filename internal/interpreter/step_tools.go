@@ -189,7 +189,7 @@ func (ip *Interpreter) StepTools(d *StepData) *StepResult {
 
 		err = tools.ToolExistFile(pRes)
 		if err != nil {
-			ip.runtimev("failed to use exist tool: %v\n", err)
+			ip.runtimevwarn("failed to use exist tool: %v\n", err)
 			err = ip.ipush(0)
 			if err != nil {
 				return StepBad(fmt.Errorf("failed to run step. exist command failed. failure pushing value: %v", err))

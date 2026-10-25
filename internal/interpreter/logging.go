@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/ktnuity/wet/internal/errors"
@@ -41,7 +42,7 @@ func (ip *Interpreter) runtimevwarn(format string, args...any) bool {
 	sb.WriteString("Warn: ")
 	sb.WriteString(colorReset)
 	sb.WriteString(format)
-	fmt.Printf(sb.String(), args...)
+	fmt.Fprintf(os.Stderr, sb.String(), args...)
 
 	return false
 }
