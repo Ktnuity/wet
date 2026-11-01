@@ -51,8 +51,12 @@ func (ip *Interpreter) StepPrint(d *StepData) *StepResult {
 		for result == nil {
 			ip.runtimev("reading value.")
 			line, err := ip.reader.ReadString('\n')
-			if err != nil && err != io.EOF {
-				return ip.runtimeverr(d, "Failed to run step. readint operator failed. failed to read input: %v", err)
+			if err != nil {
+				if err != io.EOF {
+					return ip.runtimeverr(d, "Failed to run step. readint operator failed. failed to read input: %v", err)
+				} else {
+					return ip.runtimeverr(d, "Failed to run step. readint operator failed. failed to read input: stdin is EOF.")
+				}
 			}
 
 			line = strings.TrimSpace(line)
