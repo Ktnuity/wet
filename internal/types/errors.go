@@ -21,7 +21,7 @@ func (e *RuntimeError) Error() string {
 	sb.WriteString(colorRed)
 	sb.WriteString("Runtime Error: ")
 	sb.WriteString(colorReset)
-	sb.WriteString("%v")
+	sb.WriteString("%v\n")
 	return fmt.Sprintf(sb.String(), e.Err)
 }
 

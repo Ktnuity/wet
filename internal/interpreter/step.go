@@ -45,7 +45,7 @@ func (ip *Interpreter) newStep() (StepData, *StepResult) {
 	token := inst.Token
 
 	if token == nil {
-		return StepData{}, ip.runtimeverr(&StepData{}, "failed to run step. token at index %d is nil\n", ip.ip)
+		return StepData{}, ip.runtimeverr(&StepData{}, "failed to run step. token at index %d is nil", ip.ip)
 	}
 
 	data := StepData{

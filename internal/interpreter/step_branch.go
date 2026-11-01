@@ -8,21 +8,21 @@ import (
 func (ip *Interpreter) StepBranch(d *StepData) *StepResult {
 	if d.token.Equals("if", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr(d, "failed to run step. if operator failed. stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. if operator failed. stack is empty.")
 		}
 
-		ip.runtimev("validating if-condition.\n")
+		ip.runtimev("validating if-condition.")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr(d, "failed to run step. if operator failed. failed to get condition value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. if operator failed. failed to get condition value: %v", err)
 		}
 
 		var truthy bool = false
 		if s1, ok := v1.String(); ok {
-			ip.runtimev("popped \"%s\"\n", s1)
+			ip.runtimev("popped \"%s\"", s1)
 			truthy = len(s1) > 0
 		} else if n1, ok := v1.Int(); ok {
-			ip.runtimev("popped %d\n", n1)
+			ip.runtimev("popped %d", n1)
 			truthy = n1 != 0
 		}
 
@@ -32,21 +32,21 @@ func (ip *Interpreter) StepBranch(d *StepData) *StepResult {
 		}
 	} else if d.token.Equals("unless", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr(d, "failed to run step. unless operator failed. stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. unless operator failed. stack is empty.")
 		}
 
-		ip.runtimev("validating unless-condition.\n")
+		ip.runtimev("validating unless-condition.")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr(d, "failed to run step. unless operator failed. failed to get condition value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. unless operator failed. failed to get condition value: %v", err)
 		}
 
 		var truthy bool = false
 		if s1, ok := v1.String(); ok {
-			ip.runtimev("popped \"%s\"\n", s1)
+			ip.runtimev("popped \"%s\"", s1)
 			truthy = len(s1) > 0
 		} else if n1, ok := v1.Int(); ok {
-			ip.runtimev("popped %d\n", n1)
+			ip.runtimev("popped %d", n1)
 			truthy = n1 != 0
 		}
 
@@ -61,21 +61,21 @@ func (ip *Interpreter) StepBranch(d *StepData) *StepResult {
 		}
 	} else if d.token.Equals("do", types.TokenTypeKeyword) {
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr(d, "failed to run step. do operator failed. stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. do operator failed. stack is empty.")
 		}
 
-		ip.runtimev("validating do-condition.\n")
+		ip.runtimev("validating do-condition.")
 		v1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr(d, "failed to run step. do operator failed. failed to get condition value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. do operator failed. failed to get condition value: %v", err)
 		}
 
 		var truthy bool = false
 		if s1, ok := v1.String(); ok {
-			ip.runtimev("popped \"%s\"\n", s1)
+			ip.runtimev("popped \"%s\"", s1)
 			truthy = len(s1) > 0
 		} else if n1, ok := v1.Int(); ok {
-			ip.runtimev("popped %d\n", n1)
+			ip.runtimev("popped %d", n1)
 			truthy = n1 != 0
 		}
 
@@ -91,7 +91,7 @@ func (ip *Interpreter) StepBranch(d *StepData) *StepResult {
 		if d.inst.Mode == EndModeProc {
 			ret, ok := ip.calls.Pop()
 			if !ok {
-				return ip.runtimeverr(d, "failed to run step. end operator failed. call stack is empty.\n")
+				return ip.runtimeverr(d, "failed to run step. end operator failed. call stack is empty.")
 			}
 
 			ip.ip = ret
@@ -103,101 +103,101 @@ func (ip *Interpreter) StepBranch(d *StepData) *StepResult {
 			}
 		}
 	} else if d.token.Equals("while", types.TokenTypeKeyword) {
-		ip.runtimev("while (do nothing).\n")
+		ip.runtimev("while (do nothing).")
 	} else if d.token.Equals("until", types.TokenTypeKeyword) {
-		ip.runtimev("until (do nothing).\n")
+		ip.runtimev("until (do nothing).")
 	} else if d.token.Equals("proc", types.TokenTypeKeyword) {
-		ip.runtimev("proc (skip to end).\n")
+		ip.runtimev("proc (skip to end).")
 		if d.inst.Next == -1 {
-			return ip.runtimeverr(d, "failed to run step. proc operator failed. skip is undefined.\n")
+			return ip.runtimeverr(d, "failed to run step. proc operator failed. skip is undefined.")
 		}
 
 		ip.ip = int(d.inst.Next)
 		return StepOkSkip()
 	} else if d.token.Equals("ret", types.TokenTypeKeyword) {
-		ip.runtimev("ret.\n")
+		ip.runtimev("ret.")
 		ret, ok := ip.calls.Pop()
 		if !ok {
-			return ip.runtimeverr(d, "failed to run step. ret operator failed. call stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. ret operator failed. call stack is empty.")
 		}
 
 		ip.ip = ret
 		return StepOkSkip()
 	} else if d.token.Equals("dret", types.TokenTypeKeyword) {
-		ip.runtimev("dret.\n")
+		ip.runtimev("dret.")
 		if ip.stack.Len() < 1 {
-			return ip.runtimeverr(d, "failed to run step. dret operator failed. stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. dret operator failed. stack is empty.")
 		}
 
 		ret, ok := ip.calls.Pop()
 		if !ok {
-			return ip.runtimeverr(d, "failed to run step. dret operator failed. call stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. dret operator failed. call stack is empty.")
 		}
 
 		pop1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr(d, "failed to run step. dret operator failed. failed to get count value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. dret operator failed. failed to get count value: %v", err)
 		}
 
 		popi, ok := pop1.Int()
 		if !ok {
-			return ip.runtimeverr(d, "failed to run step. dret operator failed. count value must be int.\n")
+			return ip.runtimeverr(d, "failed to run step. dret operator failed. count value must be int.")
 		}
 
 		if ip.stack.Len() < popi {
-			return ip.runtimeverr(d, "failed to run step. dret operator failed. %d dret requires %d values on stack, had %d.\n", popi, popi + 1, ip.stack.Len() + 1)
+			return ip.runtimeverr(d, "failed to run step. dret operator failed. %d dret requires %d values on stack, had %d.", popi, popi + 1, ip.stack.Len() + 1)
 		}
 
 		for i := range popi {
 			vp, err := ip.pop()
 			if err != nil {
-				return ip.runtimeverr(d, "failed to run step. dret operator failed. failed to get value #%d: %v\n", i, err)
+				return ip.runtimeverr(d, "failed to run step. dret operator failed. failed to get value #%d: %v", i, err)
 			}
 
 			if pi, ok := vp.Int(); ok {
-				ip.runtimev("popped %d\n", pi)
+				ip.runtimev("popped %d", pi)
 			} else if ps, ok := vp.String(); ok {
-				ip.runtimev("popped \"%s\"\n", ps)
+				ip.runtimev("popped \"%s\"", ps)
 			} else if pp, ok := vp.Path(); ok {
-				ip.runtimev("popped %s\n", pp)
+				ip.runtimev("popped %s", pp)
 			}
 		}
 
 		ip.ip = ret
 		return StepOkSkip()
 	} else if d.token.Equals("iret", types.TokenTypeKeyword) {
-		ip.runtimev("iret.\n")
+		ip.runtimev("iret.")
 		if ip.stack.Len() < 2 {
-			return ip.runtimeverr(d, "failed to run step. iret operator failed. stack need 2 elements .\n")
+			return ip.runtimeverr(d, "failed to run step. iret operator failed. stack need 2 elements .")
 		}
 
 		ret, ok := ip.calls.Pop()
 		if !ok {
-			return ip.runtimeverr(d, "failed to run step. iret operator failed. call stack is empty.\n")
+			return ip.runtimeverr(d, "failed to run step. iret operator failed. call stack is empty.")
 		}
 
 		ret1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to get ret count value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to get ret count value: %v", err)
 		}
 
 		pop1, err := ip.pop()
 		if err != nil {
-			return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to get drop count value: %v\n", err)
+			return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to get drop count value: %v", err)
 		}
 
 		reti, ok := ret1.Int()
 		if !ok {
-			return ip.runtimeverr(d, "failed to run step. iret operator failed. ret count value must be int.\n")
+			return ip.runtimeverr(d, "failed to run step. iret operator failed. ret count value must be int.")
 		}
 
 		popi, ok := pop1.Int()
 		if !ok {
-			return ip.runtimeverr(d, "failed to run step. iret operator failed. drop count value must be int.\n")
+			return ip.runtimeverr(d, "failed to run step. iret operator failed. drop count value must be int.")
 		}
 
 		if ip.stack.Len() < popi + reti {
-			return ip.runtimeverr(d, "failed to run step. iret operator failed. %d %d iret requires %d values on stack, had %d.\n", popi, reti, popi + reti + 2, ip.stack.Len() + 2)
+			return ip.runtimeverr(d, "failed to run step. iret operator failed. %d %d iret requires %d values on stack, had %d.", popi, reti, popi + reti + 2, ip.stack.Len() + 2)
 		}
 
 		retStack := util.Stack[types.DataType]{}
@@ -205,15 +205,15 @@ func (ip *Interpreter) StepBranch(d *StepData) *StepResult {
 		for i := range reti {
 			retp, err := ip.pop()
 			if err != nil {
-				return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to get ret value #%d: %v\n", i, err)
+				return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to get ret value #%d: %v", i, err)
 			}
 
 			if pi, ok := retp.Int(); ok {
-				ip.runtimev("popped %d\n", pi)
+				ip.runtimev("popped %d", pi)
 			} else if ps, ok := retp.String(); ok {
-				ip.runtimev("popped \"%s\"\n", ps)
+				ip.runtimev("popped \"%s\"", ps)
 			} else if pp, ok := retp.Path(); ok {
-				ip.runtimev("popped %s\n", pp)
+				ip.runtimev("popped %s", pp)
 			}
 
 			retStack.Push(retp)
@@ -222,30 +222,30 @@ func (ip *Interpreter) StepBranch(d *StepData) *StepResult {
 		for i := range popi {
 			vp, err := ip.pop()
 			if err != nil {
-				return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to get drop value #%d: %v\n", i, err)
+				return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to get drop value #%d: %v", i, err)
 			}
 
 			if pi, ok := vp.Int(); ok {
-				ip.runtimev("dropped %d\n", pi)
+				ip.runtimev("dropped %d", pi)
 			} else if ps, ok := vp.String(); ok {
-				ip.runtimev("dropped \"%s\"\n", ps)
+				ip.runtimev("dropped \"%s\"", ps)
 			} else if pp, ok := vp.Path(); ok {
-				ip.runtimev("dropped %s\n", pp)
+				ip.runtimev("dropped %s", pp)
 			}
 		}
 
 		for retStack.Len() > 0 {
 			retp, ok := retStack.Pop()
 			if !ok {
-				return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to repush ret value #%d\n", retStack.Len())
+				return ip.runtimeverr(d, "failed to run step. iret operator failed. failed to repush ret value #%d", retStack.Len())
 			}
 
 			if pi, ok := retp.Int(); ok {
-				ip.runtimev("pushed %d\n", pi)
+				ip.runtimev("pushed %d", pi)
 			} else if ps, ok := retp.String(); ok {
-				ip.runtimev("pushed \"%s\"\n", ps)
+				ip.runtimev("pushed \"%s\"", ps)
 			} else if pp, ok := retp.Path(); ok {
-				ip.runtimev("pushed %s\n", pp)
+				ip.runtimev("pushed %s", pp)
 			}
 
 			ip.push(retp)

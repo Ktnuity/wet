@@ -21,7 +21,7 @@ func (ip *Interpreter) runtimev(format string, args...any) bool {
 	sb.WriteString("Runtime: ")
 	sb.WriteString(colorReset)
 	sb.WriteString(format)
-	fmt.Printf(sb.String(), args...)
+	fmt.Printf(sb.String() + "\n", args...)
 
 	return false
 }
@@ -42,7 +42,7 @@ func (ip *Interpreter) runtimevwarn(format string, args...any) bool {
 	sb.WriteString("Warn: ")
 	sb.WriteString(colorReset)
 	sb.WriteString(format)
-	fmt.Fprintf(os.Stderr, sb.String(), args...)
+	fmt.Fprintf(os.Stderr, sb.String() + "\n", args...)
 
 	return false
 }
@@ -60,24 +60,14 @@ func (ip *Interpreter) runtimeverr(d *StepData, format string, args...any) *Step
 	traceLines := errors.Trace(word)
 
 	lines := make([]string, 0, 8 + len(traceLines))
-	lines = append(lines, "\n")
 	lines = append(lines, fmt.Sprintf(format, args...))
 	for _, line := range traceLines {
 		lines = append(lines, fmt.Sprintf(" %v", line))
 	}
 
-	var sb strings.Builder
-	for i, line := range lines {
-		if i > 2 {
-			sb.WriteString("\n")
-		}
-
-		sb.WriteString(line)
-	}
-
 	return &StepResult{
 		status: ip.runtimev(format, args...),
-		result: fmt.Errorf("%v\n", sb.String()),
+		result: fmt.Errorf("%v", strings.Join(lines, "\n")),
 	}
 }
 

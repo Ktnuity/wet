@@ -14,7 +14,8 @@ type PreparedTypeCheck struct {
 }
 
 func BadTypeCheck(operator *types.Word, info...string) {
-	fmt.Printf("Type Checker Failed!\n")
+
+	fmt.Printf("%sType-Check Error:%s ", "\033[31m", "\033[0m"); // Red, Reset
 	fmt.Printf("Operator: %s\n", operator.UnwrapName())
 
 	traceLines := Trace(operator)

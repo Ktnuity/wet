@@ -13,7 +13,7 @@ func (ip *Interpreter) pop() (types.DataType, error) {
 		return value, fmt.Errorf("failed to ipop. stack is empty.")
 	}
 
-	ip.runtimev("new stack size %d\n", ip.stack.Len())
+	ip.runtimev("new stack size %d", ip.stack.Len())
 
 	return value, nil
 }
@@ -41,7 +41,7 @@ func (ip *Interpreter) push(value types.DataType) error {
 	}
 
 	ip.stack.Push(value)
-	ip.runtimev("new stack size %d\n", ip.stack.Len())
+	ip.runtimev("new stack size %d", ip.stack.Len())
 
 	return nil
 }

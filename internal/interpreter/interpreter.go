@@ -31,11 +31,11 @@ func (ip *Interpreter) Step() (bool, error) {
 		return result.status, result.result
 	}
 
-	ip.runtimev("current stack size %d\n", ip.stack.Len())
+	ip.runtimev("current stack size %d", ip.stack.Len())
 
 	if IsVerboseRuntime() {
 		tokenLog := data.token.Format()
-		ip.runtimev("current token [%s] at ip %d\n", tokenLog, ip.ip)
+		ip.runtimev("current token [%s] at ip %d", tokenLog, ip.ip)
 	}
 
 	result = ip.StepLiteral(&data)
@@ -101,15 +101,15 @@ func (ip *Interpreter) Step() (bool, error) {
 	}
 
 	if data.token.Equals("exit", types.TokenTypeKeyword) {
-		ip.runtimev("exit command. exiting...\n")
+		ip.runtimev("exit command. exiting...")
 		ip.ip = ip.eop
 		return true, nil
 	}
 
 	if IsVerboseRuntime() {
 		tokenLog := data.token.Format()
-		ip.runtimev("invalid token [%s] at ip %d\n", tokenLog, ip.ip)
+		ip.runtimev("invalid token [%s] at ip %d", tokenLog, ip.ip)
 	}
 
-	return false, fmt.Errorf("failed to run step. unknown operator at ip %d\n", ip.ip)
+	return false, fmt.Errorf("failed to run step. unknown operator at ip %d", ip.ip)
 }

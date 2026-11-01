@@ -15,13 +15,13 @@ func (ip *Interpreter) load(name string) (types.DataType, error) {
 
 	s1, ok := value.String()
 	if ok {
-		ip.runtimev("loaded \"%s\"\n", s1)
+		ip.runtimev("loaded \"%s\"", s1)
 		return value, nil
 	}
 
 	n1, ok := value.Int()
 	if ok {
-		ip.runtimev("loaded %d\n", n1)
+		ip.runtimev("loaded %d", n1)
 		return value, nil
 	}
 
@@ -32,9 +32,9 @@ func (ip *Interpreter) store(name string, value types.DataType) error {
 	s1, okString := value.String()
 	n1, okInt := value.Int()
 	if okString {
-		ip.runtimev("stored \"%s\"\n", s1)
+		ip.runtimev("stored \"%s\"", s1)
 	} else if okInt {
-		ip.runtimev("stored %d\n", n1)
+		ip.runtimev("stored %d", n1)
 	} else {
 		return fmt.Errorf("failed to store(%s). value given, but unknown type.", name)
 	}
