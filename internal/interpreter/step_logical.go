@@ -50,6 +50,19 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 				ip.runtimev("popped string")
 				ip.runtimev("popped %d", n1)
 			}
+		} else if p1, ok := v1.Path(); ok {
+			if p2, ok := v2.Path(); ok {
+				ip.runtimev("popped %s", p1)
+				ip.runtimev("popped %s", p2)
+
+				if p1 == p2 {
+					result = 1
+					name = "true"
+				}
+			} else {
+				ip.runtimev("popped path")
+				ip.runtimev("popped %s", p1)
+			}
 		}
 
 		err = ip.ipush(result)
@@ -99,6 +112,18 @@ func (ip *Interpreter) StepLogical(d *StepData) *StepResult {
 			} else {
 				ip.runtimev("popped string")
 				ip.runtimev("popped %d", n1)
+			}
+		} else if p1, ok := v1.Path(); ok {
+			if p2, ok := v2.Path(); ok {
+				ip.runtimev("popped %s", p1)
+				ip.runtimev("popped %s", p2)
+				if p1 == p2 {
+					result = 0
+					name = "false"
+				}
+			} else {
+				ip.runtimev("popped path")
+				ip.runtimev("popped %s", p1)
 			}
 		}
 

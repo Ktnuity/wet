@@ -868,6 +868,8 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			if t2 != types.ValueTypeInt {
 				p.With(fmt.Sprintf("Cannot compare int and %s.", t2.Format())).Throw()
 			}
+		} else if t1 == types.ValueTypePath || t2 == types.ValueTypePath {
+			p.With(fmt.Sprintf("Cannot compare Path < Path.")).Throw()
 		}
 
 		d.base.typeStack.Push(types.ValueTypeInt)
@@ -894,6 +896,8 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			if t2 != types.ValueTypeInt {
 				p.With(fmt.Sprintf("Cannot compare int and %s.", t2.Format())).Throw()
 			}
+		} else if t1 == types.ValueTypePath || t2 == types.ValueTypePath {
+			p.With(fmt.Sprintf("Cannot compare Path > Path.")).Throw()
 		}
 
 		d.base.typeStack.Push(types.ValueTypeInt)
@@ -920,6 +924,8 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			if t2 != types.ValueTypeInt {
 				p.With(fmt.Sprintf("Cannot compare int and %s.", t2.Format())).Throw()
 			}
+		} else if t1 == types.ValueTypePath || t2 == types.ValueTypePath {
+			p.With(fmt.Sprintf("Cannot compare Path <= Path.")).Throw()
 		}
 
 		d.base.typeStack.Push(types.ValueTypeInt)
@@ -946,6 +952,8 @@ func typeCheckLogical(d *TypeCheckSubData) (*TypeResult, error) {
 			if t2 != types.ValueTypeInt {
 				p.With(fmt.Sprintf("Cannot compare int and %s.", t2.Format())).Throw()
 			}
+		} else if t1 == types.ValueTypePath || t2 == types.ValueTypePath {
+			p.With(fmt.Sprintf("Cannot compare Path >= Path.")).Throw()
 		}
 
 		d.base.typeStack.Push(types.ValueTypeInt)
