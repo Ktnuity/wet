@@ -13,6 +13,10 @@ import (
 // Returning (true, nil) means the copy succeeded and a file now exist in the destination path.
 // Returning (false, nil) makes no sense.
 func ToolCopyFile(src, dst string) (bool, error) {
+	if err := unavailable("copy"); err != nil {
+		return false, err
+	}
+
 	pathSrc, err := fixPath(src, AllowRoot)
 	if err != nil {
 		return false, fmt.Errorf("failed to copy file %s to %s: %w", src, dst, err)

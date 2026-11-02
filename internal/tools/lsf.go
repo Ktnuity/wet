@@ -6,6 +6,10 @@ import (
 )
 
 func ToolLsf(dir string) (int64, error) {
+	if err := unavailable("lsf"); err != nil {
+		return 0, err
+	}
+
 	path, err := fixPath(dir, AllowRoot)
 	if err != nil {
 		return 0, fmt.Errorf("failed to list directory files in %s: %w", dir, err)

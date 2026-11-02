@@ -6,6 +6,10 @@ import (
 )
 
 func ToolGetf(idx int, dir string) (string, error) {
+	if err := unavailable("getf"); err != nil {
+		return "", err
+	}
+
 	path, err := fixPath(dir, AllowRoot)
 	if err != nil {
 		return "", fmt.Errorf("failed to get file name in %s: %w", dir, err)

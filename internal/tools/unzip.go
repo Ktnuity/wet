@@ -17,6 +17,10 @@ type ToolUnzipResult struct {
 func ToolUnzipFile(dst, res string) (ToolUnzipResult, error) {
 	var result ToolUnzipResult
 
+	if err := unavailable("unzip"); err != nil {
+		return result, err
+	}
+
 	pathRes, err := fixPath(res, AllowRoot)
 	if err != nil {
 		return result, fmt.Errorf("failed to unzip file %s: %w", res, err)
