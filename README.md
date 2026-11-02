@@ -1,4 +1,9 @@
 # wet [<img src="https://img.shields.io/github/license/ktnuity/wet">](https://github.com/Ktnuity/wet/blob/master/LICENSE)
+
+<p align="center">
+    <img src="https://github.com/Ktnuity/wet/blob/dev/docs/img/icon.png?raw=true" alt="wet" />
+</p>
+
 **wet** is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.
 
 It's:
