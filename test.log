@@ -237,7 +237,7 @@ Test 6 | tests/tokens/init.wet
 ] validating download.
 ] download success.
 ] license file content:
-Copyright (c) 2025 Kirdow
+Copyright (c) 2026 Kirdow
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 and associated documentation files (the "Software"), to deal in the Software without
@@ -261,7 +261,7 @@ Test 7 | tests/tools/init.wet
 ] downloading license...
 ] download success.
 ] license downloaded:
-Copyright (c) 2025 Kirdow
+Copyright (c) 2026 Kirdow
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 and associated documentation files (the "Software"), to deal in the Software without
@@ -343,11 +343,11 @@ For more info, see: https://github.com/Ktnuity/wet
 
 Released under MIT License: https://github.com/Ktnuity/wet/blob/master/LICENSE
 
-Copyright (c) 2025 Kirdow
+Copyright (c) 2026 Kirdow
 Test 11 | ./wet --license
 wet is released under MIT License
 
-Copyright (c) 2025 Kirdow
+Copyright (c) 2026 Kirdow
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 and associated documentation files (the "Software"), to deal in the Software without
@@ -366,11 +366,11 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 Test 12 | ./wet --version
-wet v0.1.0
-Copyright (c) 2025 Kirdow
+wet v0.2.0
+Copyright (c) 2026 Kirdow
 Released under MIT License.
 Test 13 | ./wet
-wet v0.1.0
-Copyright (c) 2025 Kirdow
+wet v0.2.0
+Copyright (c) 2026 Kirdow
 Released under MIT License.
 Usage: wet [options] <file>

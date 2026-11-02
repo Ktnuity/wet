@@ -15,7 +15,7 @@ end
 end
 
 "downloading license..." log
-"https://raw.githubusercontent.com/Ktnuity/wet/refs/heads/master/LICENSE" ./test.txt download ! if
+"https://raw.githubusercontent.com/Ktnuity/wet/refs/heads/dev/LICENSE" ./test.txt download ! if
     "download failed." log
     exit
 end
