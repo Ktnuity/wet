@@ -388,4 +388,4 @@ Inspired by these projects:
 - My extensive use of bash files for development: [ktnlibc/build.sh](https://github.com/Kirdow/ktnlibc/blob/master/build.sh), [cstack/build.sh](https://github.com/Kirdow/cstack/blob/master/build.sh), [pDB/build.sh](https://github.com/Kirdow/pDB/blob/master/run.sh).
 
 # License
-`wet` is released under the [MIT License](https://github.com/Ktnuity/wet/blob/master/LICENSE).
+`wet` is released and the source is made available under the [MIT License](https://github.com/Ktnuity/wet/blob/master/LICENSE).
