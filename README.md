@@ -6,6 +6,9 @@
 
 **wet** is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.
 
+> [!NOTE]
+> **wet** now has a website. Visit [wet-lang.org](https://wet-lang.org/) for more information. On the website you can try the language in your browser using the [playground](https://wet-lang.org/playground/).
+
 It's:
 - At some points a pre-build.
 - At other parts a post-build.
