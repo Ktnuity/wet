@@ -1,5 +1,5 @@
 # TODO: Replace these with `const`
-proc wet_version string do "v0.2.0" end
+proc wet_version string do "v0.2.1" end
 proc wet_name string do "wet" end
 proc wet_license string do "MIT License" end
 proc wet_copy string do "Kirdow" end

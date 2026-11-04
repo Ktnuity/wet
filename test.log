@@ -375,11 +375,11 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 Test 13 | ./wet --version
-wet v0.2.0
+wet v0.2.1
 Copyright (c) 2026 Kirdow
 Released under MIT License.
 Test 14 | ./wet
-wet v0.2.0
+wet v0.2.1
 Copyright (c) 2026 Kirdow
 Released under MIT License.
 Usage: wet [options] <file>
