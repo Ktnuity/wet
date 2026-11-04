@@ -338,6 +338,23 @@ When a task downloads to a file, it would need an absolute file in relation to y
 
 </details>
 
+<details>
+    <summary><code>Type Checker</code>: Information about static type checking</summary>
+
+**wet** uses static type checking in order to ensure programs execute more predictably. Type checking runs once before execution. Any errors during type checking will be reported if found and halts execution.
+
+### Things worth knowing about
+- Scopes stacks must persist.
+    - While loops cannot cause the stack to grow or shrink.
+    - If blocks with matching else must have both paths generate matching stack once `end` is reached.
+    - `ret` acts as if `end` for the closest up-scope `proc` was reached. Upon reaching it, anything between it and the next `end` is unreachable code and will throw a type-checker error.
+- Memory usage is difficult to type-check as it changes during runtime. We could introduce greedy type checking by cross-referencing every usage of a memory name. But this leads to slower execution in larger projects. For now, `"" false` is returned when `sload` exists but has incorrect type, and `0 false` is returned when `iload` exists but has incorrect type.
+- `--verbose-type-check` can be used to debug your script if a type-checking error is confusing. Logs the type stack and gives you a good idea of what's happening after each instruction.
+
+
+</details>
+
+
 # Contributing?
 Contributing is not needed, this section is mostly to document the development cycle I follow. But if you do want to contribute, this applies to you as well.
 
