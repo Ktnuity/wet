@@ -257,7 +257,16 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ] running last cleanup.
 ] removing: license.txt
-Test 7 | tests/tools/init.wet
+Test 7 | tests/return/init.wet
+test_ret
+5: a
+0: b
+test_ret2
+test_puts2: a
+test_puts2: b
+test ret fib:
+fib(5) = 55
+Test 8 | tests/tools/init.wet
 ] downloading license...
 ] download success.
 ] license downloaded:
@@ -280,7 +289,7 @@ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ] license file removed.
-Test 8 | tests/untilunless/init.wet
+Test 9 | tests/untilunless/init.wet
 testing if
 testing true if
 ok
@@ -304,7 +313,7 @@ testing until sum(1,5)
 ok
 
 verdict: ok
-Test 9 | tests/zip/init.wet
+Test 10 | tests/zip/init.wet
 ] cleaning up old files and setting up pre-requisites.
 ] running main zip test.
 ] downloading zip.
@@ -319,7 +328,7 @@ This is in bar.txt
 ] removing: root/foo.txt
 ] removing: root/bar.txt
 ] removing: root
-Test 10 | .\wet.exe --help
+Test 11 | .\wet.exe --help
 wet is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.
 It's:
   - At some points a pre-build.
@@ -344,7 +353,7 @@ For more info, see: https://github.com/Ktnuity/wet
 Released under MIT License: https://github.com/Ktnuity/wet/blob/master/LICENSE
 
 Copyright (c) 2026 Kirdow
-Test 11 | .\wet.exe --license
+Test 12 | .\wet.exe --license
 wet is released under MIT License
 
 Copyright (c) 2026 Kirdow
@@ -365,11 +374,11 @@ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
 OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
-Test 12 | .\wet.exe --version
+Test 13 | .\wet.exe --version
 wet v0.2.0
 Copyright (c) 2026 Kirdow
 Released under MIT License.
-Test 13 | .\wet.exe
+Test 14 | .\wet.exe
 wet v0.2.0
 Copyright (c) 2026 Kirdow
 Released under MIT License.

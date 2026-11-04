@@ -60,6 +60,50 @@ func popStack(data *TypeCheckData) *StackPreview {
 	return &preview
 }
 
+func seekProc(data *TypeCheckData) *StackPreview {
+	for i := range len(data.typeStackStack) {
+		preview, ok := data.typeStackStack.Seek(uint(i))
+		if !ok {
+			return nil
+		}
+
+		if preview.cause == nil || preview.cause.Token == nil {
+			return nil
+		}
+
+		if !preview.cause.Token.Equals("proc", types.TokenTypeKeyword) {
+			continue
+		}
+
+		preview.refStack = data.typeStack
+		return &preview
+	}
+
+	return nil
+}
+
+func seekRetEnd(data *TypeCheckSubData) bool {
+	(*data.tip)++
+
+	if *data.tip >= data.base.eop {
+		return false
+	}
+
+	inst := &data.base.inst[*data.tip]
+	if !inst.Token.Equals("end", types.TokenTypeKeyword) {
+		return false
+	}
+
+	preview, ok := data.base.typeStackStack.Pop()
+	if !ok {
+		return false
+	}
+
+	data.base.typeStack = preview.stack
+
+	return true
+}
+
 func peekStack(data *TypeCheckData) *StackPreview {
 	preview, ok := data.typeStackStack.PeekRef()
 	if !ok {
@@ -781,6 +825,26 @@ func typeCheckBranch(d *TypeCheckSubData) (*TypeResult, error) {
 		} else {
 			p.Throw(fmt.Sprintf("Connected keyword '%v' is not implemented.", preview.cause.Token.Word))
 		}
+	} else if d.token.Equals("ret", types.TokenTypeKeyword) {
+		preview := seekProc(d.base)
+		if preview == nil {
+			p.Throw("No neighbor proc stack found.")
+		}
+
+		out := preview.cause.Token.Extra.Proc.Out
+		if preview.refStack.Len() < len(out) {
+			p.Stack(len(out), preview.refStack.Len())
+		}
+
+		if err := compareStacks(preview.refStack, out); err != nil {
+			p.ConnectedTokenError("proc", err)
+		}
+
+		if ok := seekRetEnd(d); !ok {
+			p.Throw("Reached EOF or Unreachable code.")
+		}
+
+		typecheckv("ret proc %s\n", preview.cause.Token.Extra.Proc.Name.UnwrapName())
 	} else if d.token.Equals("while", types.TokenTypeKeyword) {
 		pushStack(d.base, d.inst)
 	} else if d.token.Equals("until", types.TokenTypeKeyword) {

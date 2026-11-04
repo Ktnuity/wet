@@ -1,28 +1,39 @@
-proc test_ret
+@include preq.wet
+
+proc fib int in int do
     dup 1 <= if
         ret
     end
 
-    dup -- test_ret
-    swap 2 - test_ret
+    dup -- fib
+    swap 2 - fib
     +
 end
 
-proc test_dret
-    0 0 0
-    3 dret
+proc test_ret path int in int do
+    dup if
+        ./a swap
+        ret
+    end
+
+    :b swap
 end
 
-proc test_iret
-    0 swap 0 swap 0 swap
-    3 1 iret
+proc test_ret2 path in int do
+    if
+        ./a ret
+    end
+
+    :b ret
 end
 
 "test_ret\n" puts
-"fib(5) = " 10 test_ret + "\n" + puts
+5 test_ret test_puts
+0 test_ret test_puts
 
-"test_dret\n" puts
-10 test_dret .
+"test_ret2\n" puts
+5 test_ret2 test_puts2
+0 test_ret2 test_puts2
 
-"test_iret\n" puts
-10 test_iret .
+"test ret fib:\n" puts
+"fib(5) = " 10 fib + "\n" + puts

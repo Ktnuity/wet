@@ -17,6 +17,22 @@ func (s *Stack[T]) Pop() (T, bool) {
 	return val, true
 }
 
+func (s *Stack[T]) Seek(i uint) (T, bool) {
+	if len(*s) == 0 {
+		var zero T
+		return zero, false
+	}
+
+	if uint(len(*s)) <= i {
+		var zero T
+		return zero, false
+	}
+
+	idx := len(*s) - 1 - int(i)
+	val := (*s)[idx]
+	return val, true
+}
+
 func (s *Stack[T]) Peek() (T, bool) {
 	if len(*s) == 0 {
 		var zero T

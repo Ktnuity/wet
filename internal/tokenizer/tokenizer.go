@@ -347,7 +347,7 @@ func isNumber(word *types.Word) bool {
 var keywords = map[string]bool{
 	"while": true, "until": true, "do": true, "end": true,
 	"if": true, "unless": true, "else": true,
-	"ret": true, "iret": true, "dret": true,
+	"ret": true,
 	"dup": true, "over": true, "swap": true, "2dup": true, "2swap": true, "drop": true, "nop": true,
 	"store": true, "iload": true, "sload": true,
 	"download": true, "move": true, "copy": true, "exist": true, "touch": true, "mkdir": true, "rm": true, "readfile": true,
