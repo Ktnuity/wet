@@ -33,6 +33,10 @@ This project is WIP so what follows below is mostly a plan for what will become.
 - Strings: `puts`
 - Numbers: `.`
 
+## Inputs
+- Numbers: `,`
+  - Reads 1 integer from stdin.
+
 ## Conditionals & Branching
 The following branches and conditionals would exist:
 - Loops: `while`, `until`
