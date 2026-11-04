@@ -6,7 +6,11 @@ import (
 )
 
 func ToolMakeDirectory(res string) error {
-	path, err := fixPath(res)
+	if err := unavailable("mkdir"); err != nil {
+		return err
+	}
+
+	path, err := fixPath(res, AllowRoot)
 	if err != nil {
 		return fmt.Errorf("failed to make directory %s: %w", res, err)
 	}

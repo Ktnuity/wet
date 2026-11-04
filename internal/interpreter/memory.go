@@ -1,0 +1,44 @@
+package interpreter
+
+import (
+	"fmt"
+
+	"github.com/ktnuity/wet/internal/types"
+)
+
+func (ip *Interpreter) load(name string) (types.DataType, error) {
+	var value types.DataType
+	value, ok := ip.memory[name]
+	if !ok {
+		return value, fmt.Errorf("failed to load(%s). value not found.", name)
+	}
+
+	s1, ok := value.String()
+	if ok {
+		ip.runtimev("loaded \"%s\"", s1)
+		return value, nil
+	}
+
+	n1, ok := value.Int()
+	if ok {
+		ip.runtimev("loaded %d", n1)
+		return value, nil
+	}
+
+	return value, fmt.Errorf("failed to load(%s). value found, but unknown type.", name)
+}
+
+func (ip *Interpreter) store(name string, value types.DataType) error {
+	s1, okString := value.String()
+	n1, okInt := value.Int()
+	if okString {
+		ip.runtimev("stored \"%s\"", s1)
+	} else if okInt {
+		ip.runtimev("stored %d", n1)
+	} else {
+		return fmt.Errorf("failed to store(%s). value given, but unknown type.", name)
+	}
+
+	ip.memory[name] = value
+	return nil
+}

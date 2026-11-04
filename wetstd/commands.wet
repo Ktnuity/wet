@@ -1,4 +1,4 @@
-macro commands
+proc wet_commands do
     "Commands:\n" puts
 
     "--help, show this menu\n" iputs

@@ -1,0 +1,40 @@
+proc log in string do
+    "] " swap + "\n" + puts
+end
+
+proc remove in path do
+    dup exist if
+        "removing: " over tostring + log
+        
+        dup rm ! if
+            "failed to remove: " over tostring + log
+            exit
+        end
+    end
+    drop
+end
+
+proc validate_exist in path do
+    dup exist ! if
+        "file " over tostring + " could not be found. exiting..." + log
+        exit
+    end
+
+    drop
+end
+
+proc cleanup do
+    ./root/foo.txt remove
+    ./root/bar.txt remove
+    ./file.txt remove
+    ./root remove
+end
+
+proc preq do
+    cleanup
+
+    ./root mkdir ! if
+        "failed to create ./root directory." log
+        exit
+    end
+end

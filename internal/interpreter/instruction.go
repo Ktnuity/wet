@@ -2,7 +2,9 @@ package interpreter
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/ktnuity/wet/internal/errors"
 	"github.com/ktnuity/wet/internal/types"
 	"github.com/ktnuity/wet/internal/util"
 )
@@ -13,10 +15,21 @@ type Instruction struct {
 	Mode		uint8
 }
 
+type ProcessTokensResult struct {
+	inst		[]Instruction
+	proc		map[string]Proc
+}
+
 type DoMode	= uint8
 const (
 	DoModeWhile DoMode = 0
 	DoModeUntil DoMode = 1
+)
+
+type EndMode = uint8
+const (
+	EndModeNormal EndMode = 0
+	EndModeProc	EndMode = 1
 )
 
 func CreateInstruction(token *types.Token) Instruction {
@@ -48,18 +61,18 @@ func scanMacros(tokens []types.Token) ([]types.Token, map[string][]types.Token, 
 	for idx := 0; idx < len(tokens); idx++ {
 		token := &tokens[idx]
 
-		if token.Value == "macro" {
+		if token.Word.Equals("macro") {
 			idx++
 			if idx >= len(tokens) {
 				return nil, nil, fmt.Errorf("failed to detect macro name at index %d. reached eof early.", idx)
 			}
 
-			macroName := tokens[idx].Value
+			macroName := tokens[idx].Word
 
 			idx++
 			macroStart := idx
 			if idx >= len(tokens) {
-				return nil, nil, fmt.Errorf("failed to detect macro start at index %d for macro name '%s'. reached eof early.", idx, macroName)
+				return nil, nil, fmt.Errorf("failed to detect macro start at index %d for macro name '%s'. reached eof early.", idx, macroName.UnwrapName())
 			}
 
 			end := -1
@@ -75,17 +88,17 @@ func scanMacros(tokens []types.Token) ([]types.Token, map[string][]types.Token, 
 					} else {
 						scopes--
 					}
-				} else if endToken.Value == "if" || endToken.Value == "while" || endToken.Value == "unless" || endToken.Value == "until" {
+				} else if endToken.Word.Any("if", "unless", "while", "until") {
 					scopes++
 				} else if endToken.Equals("macro", types.TokenTypeNone) {
-					return nil, nil, fmt.Errorf("failed to parse macro body. detected unsupported nested macro at index %d for macro name '%s'.", idx, macroName)
+					return nil, nil, fmt.Errorf("failed to parse macro body. detected unsupported nested macro at index %d for macro name '%s'.", idx, macroName.UnwrapName())
 				}
 
 				idx++
 			}
 
 			if end == -1 {
-				return nil, nil, fmt.Errorf("failed to find end for macro name '%s' definition at index %d.", macroName, idx)
+				return nil, nil, fmt.Errorf("failed to find end for macro name '%s' definition at index %d.", macroName.UnwrapName(), idx)
 			}
 
 			body := make([]types.Token, end - macroStart)
@@ -94,7 +107,7 @@ func scanMacros(tokens []types.Token) ([]types.Token, map[string][]types.Token, 
 				body[itemIndex - macroStart] = tokens[itemIndex]
 			}
 
-			resultMap[macroName] = body
+			resultMap[macroName.UnwrapName()] = body
 
 			idx = end
 		} else {
@@ -124,7 +137,7 @@ func expandMacros(tokens []types.Token) ([]types.Token, error) {
 		for idx := range len(tokens) {
 			token := &tokens[idx]
 
-			body, exists := macroMap[token.Value]
+			body, exists := macroMap[token.Word.UnwrapName()]
 			if exists {
 				for _, item := range body {
 					newTokens = append(newTokens, item)
@@ -146,14 +159,54 @@ func expandMacros(tokens []types.Token) ([]types.Token, error) {
 	return tokens, nil
 }
 
-func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
+func tokenProcessError(inst *Instruction, format string, args...any) error {
+	if inst == nil {
+		return fmt.Errorf(format, args...)
+	}
+
+	var traceLines []string
+	if inst != nil {
+		traceLines = errors.Trace(inst.Token.Word)
+	} else {
+		traceLines = make([]string, 0, 0)
+	}
+
+
+	lines := make([]string, 0, len(traceLines) + 8)
+	lines = append(lines, "Token processing failed!")
+	if inst != nil {
+		lines = append(lines, fmt.Sprintf("Token: %s", inst.Token.Word.UnwrapName()))
+		for _, line := range traceLines {
+			lines = append(lines, fmt.Sprintf(" %s", line))
+		}
+		lines = append(lines, "")
+	}
+	lines = append(lines, fmt.Sprintf(format, args...))
+
+	var sb strings.Builder
+	for i, line := range lines {
+		if i > 0 {
+			sb.WriteString("\n")
+		}
+
+		sb.WriteString(line)
+	}
+
+	return fmt.Errorf("%v", sb.String())
+}
+
+func ProcessTokens(tokens []types.Token) (*ProcessTokensResult, error) {
 	tokens, err := expandMacros(tokens)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to process tokens: %v.", err)
 	}
 
 	ipStack := &util.Stack[int64]{}
+
+	procs := make(map[string]Proc)
+
+	var lastInstruction *Instruction = nil
 
 	instructions := CreateInstructions(tokens)
 	for idx := range int64(len(instructions)) {
@@ -163,15 +216,17 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 			ipStack.Push(idx)
 		} else if instruction.Token.Equals("unless", types.TokenTypeKeyword) {
 			ipStack.Push(idx)
+		} else if instruction.Token.Equals("proc", types.TokenTypeKeyword) {
+			ipStack.Push(idx)
 		} else if instruction.Token.Equals("else", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
 			if !ok {
-				return nil, fmt.Errorf("failed to process instruction. else reached without ip-stack at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. else reached without ip-stack at index %d", idx)
 			}
 
 			other := &instructions[ip]
 			if !other.Token.Equals("if", types.TokenTypeKeyword) && !other.Token.Equals("unless", types.TokenTypeKeyword) {
-				return nil, fmt.Errorf("failed to process instruction. else reached without if at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. else reached without if at index %d", idx)
 			}
 
 			other.Next = idx + 1
@@ -182,26 +237,28 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 		} else if instruction.Token.Equals("do", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
 			if !ok {
-				return nil, fmt.Errorf("failed to process instruction. do reached without ip-stack at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. do reached without ip-stack at index %d", idx)
 			}
 
 			other := &instructions[ip]
 			if !other.Token.Equals("while", types.TokenTypeKeyword) && !other.Token.Equals("until", types.TokenTypeKeyword){
-				return nil, fmt.Errorf("failed to process instruction. do reached without while or until at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. do reached without while or until at index %d", idx)
 			}
 
 			ipStack.Push(idx);
 			instruction.Next = ip
-			
-			switch other.Token.Value {
+
+			switch other.Token.Word.UnwrapName() {
 			case "while": instruction.Mode = DoModeWhile
 			case "until": instruction.Mode = DoModeUntil
 			}
 		} else if instruction.Token.Equals("end", types.TokenTypeKeyword) {
 			ip, ok := ipStack.Pop()
 			if !ok {
-				return nil, fmt.Errorf("failed to process instruction. end reached without ip-stack at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. end reached without ip-stack at index %d", idx)
 			}
+
+			instruction.Mode = EndModeNormal
 
 			other := &instructions[ip]
 			if other.Token.Equals("if", types.TokenTypeKeyword) || other.Token.Equals("unless", types.TokenTypeKeyword) {
@@ -212,15 +269,31 @@ func ProcessTokens(tokens []types.Token) ([]Instruction, error) {
 				doIp := other.Next
 				other.Next = idx + 1
 				instruction.Next = doIp
+			} else if other.Token.Equals("proc", types.TokenTypeKeyword) {
+				instruction.Next = other.Next
+				instruction.Mode = EndModeProc
+				other.Next = idx + 1
+
+				procs[other.Token.Extra.Proc.Name.UnwrapName()] = Proc{
+					other.Token.Extra.Proc.Name,
+					ip + 1,
+					idx,
+					other.Token,
+				}
 			} else {
-				return nil, fmt.Errorf("failed to process instruction. end reached without if or else at index %d", idx)
+				return nil, tokenProcessError(instruction, "failed to process instruction. end reached without if or else at index %d", idx)
 			}
 		}
+
+		lastInstruction = instruction
 	}
 
 	if ipStack.Len() > 0 {
-		return nil, fmt.Errorf("failed to process instruction. process ended with ip-stack size %d. empty required.", ipStack.Len())
+		return nil, tokenProcessError(lastInstruction, "failed to process instruction. process ended with ip-stack size %d. empty required.", ipStack.Len())
 	}
 
-	return instructions, nil
+	return &ProcessTokensResult{
+		instructions,
+		procs,
+	}, nil
 }

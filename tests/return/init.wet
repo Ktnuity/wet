@@ -1,0 +1,39 @@
+@include preq.wet
+
+proc fib int in int do
+    dup 1 <= if
+        ret
+    end
+
+    dup -- fib
+    swap 2 - fib
+    +
+end
+
+proc test_ret path int in int do
+    dup if
+        ./a swap
+        ret
+    end
+
+    :b swap
+end
+
+proc test_ret2 path in int do
+    if
+        ./a ret
+    end
+
+    :b ret
+end
+
+"test_ret\n" puts
+5 test_ret test_puts
+0 test_ret test_puts
+
+"test_ret2\n" puts
+5 test_ret2 test_puts2
+0 test_ret2 test_puts2
+
+"test ret fib:\n" puts
+"fib(5) = " 10 fib + "\n" + puts

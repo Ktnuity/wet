@@ -6,33 +6,131 @@ import (
 	"strings"
 
 	"github.com/ktnuity/wet/internal/types"
-	"github.com/ktnuity/wet/internal/util"
 )
 
-func TokenizeCode(input string) ([]types.Token) {
+type Scan struct {
+	scan		*types.SourceLine
+	next		[]*types.SourceLine
+}
+
+func TokenizeCode(input *types.Source) ([]types.Token, error) {
 	result := make([]types.Token, 0, 8)
 
-	commentLess := stripComments(input)
-	code := stripExcessWhitespace(commentLess)
+	stripComments(input)
+	stripExcessWhitespace(input)
 
-	var scan string = code
+	scan := &Scan{
+		scan: nil,
+		next: input.Lines(),
+	}
+
+	entry := 1
 
 	for {
-		nextScan, word := nextWord(scan)
-		if nextScan == nil {
+		word := nextWord(scan, &entry)
+		if word == nil {
 			break
 		}
 
-		tokenType := getTokenType(word)
-		result = append(result, types.Token{
-			Value: word,
-			Type: tokenType,
-		})
+		tokenType, err := getTokenType(word)
+		if err != nil {
+			return result, fmt.Errorf("failed to tokenize code: %w", err)
+		}
 
-		scan = *nextScan
+		token := types.Token{
+			Word: word,
+			Type: tokenType,
+		}
+
+		if word.Equals("proc") {
+			word = nextWord(scan, &entry)
+			if word == nil {
+				break
+			}
+
+			status, err := validateNormalName(word)
+			if !status {
+				if err != nil {
+					return result, fmt.Errorf("failed to tokenize code: %w", err)
+				} else {
+					return result, fmt.Errorf("failed to tokenize code: proc name '%s' is not valid. %s.", word.UnwrapName(), word.InlineTrace())
+				}
+			}
+
+			procName := word
+
+			tokenv("proc name: %s\n", procName.UnwrapName())
+
+			outTypes := make([]types.ValueType, 0, 8)
+
+			for {
+				word = nextWord(scan, &entry)
+				if word == nil {
+					return result, fmt.Errorf("failed to tokenize code: proc out type experienced pre-mature exit.")
+				}
+
+				tokenv("Out word: %s\n", word.UnwrapName())
+
+				if word.Any("in", "do") {
+					break
+				}
+
+				outType := types.ParseValueType(word)
+				if !outType.Any() {
+					return result, fmt.Errorf("failed to tokenize code: proc out type '%s' is not valid. %s.", word.UnwrapName(), word.InlineTrace())
+				}
+
+				outTypes = append(outTypes, outType)
+			}
+
+			inTypes := make([]types.ValueType, 0, 8)
+
+			if !word.Equals("do") {
+				for {
+					word = nextWord(scan, &entry)
+					if word == nil {
+						return result, fmt.Errorf("failed to tokenize code: proc in type experienced pre-mature exit.")
+					}
+
+					tokenv("In word: %s\n", word.UnwrapName())
+
+					if word.Equals("do") {
+						break
+					}
+
+					inType := types.ParseValueType(word)
+					if !inType.Any() {
+						return result, fmt.Errorf("failed to tokenize code: proc in type '%s' is not valid. %s.", word.UnwrapName(), word.InlineTrace())
+					}
+
+					inTypes = append(inTypes, inType)
+				}
+			}
+
+			token.Extra.Proc = &types.TokenExtraProc{
+				Name: procName,
+				In: inTypes,
+				Out: outTypes,
+			}
+		}
+
+		result = append(result, token)
 	}
 
-	return result
+	return result, nil
+}
+
+func validateNormalName(word *types.Word) (bool, error) {
+	re, err := regexp.Compile("^[a-z](_?[a-z0-9]+)*$")
+	if err != nil {
+		return false, fmt.Errorf("failed to validate proc name. proc name regex failed to compile %s: %w", word.InlineTrace(), err)
+	}
+
+	if !re.MatchString(word.UnwrapName()) {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func LogTokens(tokens []types.Token) error {
@@ -40,30 +138,48 @@ func LogTokens(tokens []types.Token) error {
 		return fmt.Errorf("failed to log tokens. no tokens present")
 	}
 
-	fmt.Printf("Token Count: %d\n", len(tokens))
+	tokenv("Token Count: %d\n", len(tokens))
 
 	for idx, token := range tokens {
 		format := token.Format()
-		fmt.Printf("%d : %s\n", idx, format)
+		tokenv("%d : %s\n", idx, format)
 	}
 
 	return nil
 }
 
-func stripComments(str string) string {
-	lines := strings.Split(str, "\n")
-	result := make([]string, 0, len(lines))
+func stripComments(src *types.Source) {
 
-	for _, line := range lines {
-		if !strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "//") {
-			result = append(result, line)
+	for _, snippet := range src.Snippets {
+		filtered := make([]*types.SourceLine, 0, len(snippet.Lines))
+		for _, line := range snippet.Lines {
+			trimmedLine := strings.TrimSpace(line.Content)
+			if !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//") {
+				filtered = append(filtered, line)
+			}
 		}
+		snippet.Lines = filtered
 	}
 
-	return strings.Join(result, "\n")
 }
 
-func stripExcessWhitespace(str string) string {
+func stripExcessWhitespace(src *types.Source) {
+	for _, snippet := range src.Snippets {
+		filtered := make([]*types.SourceLine, 0, len(snippet.Lines))
+
+		for _, line := range snippet.Lines {
+			stripped := stripLineWhitespace(line.Content)
+			if len(stripped) > 0 {
+				line.Content = stripped
+				filtered = append(filtered, line)
+			}
+		}
+
+		snippet.Lines = filtered
+	}
+}
+
+func stripLineWhitespace(str string) string {
 	var result strings.Builder
 	result.Grow(len(str))
 
@@ -115,11 +231,56 @@ func stripExcessWhitespace(str string) string {
 	return strings.TrimSpace(result.String())
 }
 
-func nextWord(str string) (*string, string) {
-	str = strings.TrimSpace(str)
-	if len(str) == 0 {
-		return nil, ""
+func scanValid(scan *Scan, entry *int) bool {
+	if scan.scan == nil {
+		if len(scan.next) == 0 {
+			return false
+		}
+
+		scan.scan = scan.next[0]
+		scan.next = scan.next[1:]
+		*entry = 1
 	}
+
+	scan.scan.Content = strings.TrimSpace(scan.scan.Content)
+	for len(scan.scan.Content) == 0 {
+		if len(scan.next) == 0 {
+			return false
+		}
+
+		scan.scan = scan.next[0]
+		scan.next = scan.next[1:]
+		scan.scan.Content = strings.TrimSpace(scan.scan.Content)
+		*entry = 1
+	}
+
+	return true
+}
+
+func unescapePath(str string) string {
+	var sb strings.Builder
+	sb.Grow(len(str))
+
+	escaped := false
+	for _, ch := range str {
+		if !escaped && ch == '\\' {
+			escaped = true
+			continue
+		}
+
+		sb.WriteRune(ch)
+		escaped = false
+	}
+
+	return sb.String()
+}
+
+func nextWord(scan *Scan, entry *int) *types.Word {
+	if !scanValid(scan, entry) {
+		return nil
+	}
+
+	str := scan.scan.Content
 
 	if str[0] == '"' {
 		escaped := false
@@ -134,11 +295,14 @@ func nextWord(str string) (*string, string) {
 			}
 			if str[i] == '"' {
 				// Found the closing quote
-				return util.AsRef(strings.TrimSpace(str[i+1:])), str[:i+1]
+				scan.scan.Content = strings.TrimSpace(str[i+1:])
+				(*entry)++
+				return types.NewWord(str[:i+1], scan.scan, *entry - 1)
 			}
 		}
 		// No closing quote found - return entire string as error token
-		return util.AsRef(""), str
+		scan.scan.Content = ""
+		return types.NewWord(str, scan.scan, *entry)
 	} else if str[0] == '.' || str[0] == '/' || str[0] == ':' {
 		escaped := false
 		for i := 1; i < len(str); i++ {
@@ -151,53 +315,66 @@ func nextWord(str string) (*string, string) {
 				continue
 			}
 			if str[i] == ' ' {
-				return util.AsRef(strings.TrimSpace(str[i+1:])), strings.ReplaceAll(str[:i], "\\", "")
+				scan.scan.Content = strings.TrimSpace(str[i+1:])
+				(*entry)++
+				return types.NewWord(unescapePath(str[:i]), scan.scan, *entry - 1)
 			}
 		}
 
-		return util.AsRef(""), str
+		scan.scan.Content = ""
+		(*entry)++
+		return types.NewWord(unescapePath(str), scan.scan, *entry - 1)
 	}
 
 	parts := strings.Fields(str)
 	if len(parts) == 0 {
-		return nil, ""
+		scan.scan.Content = ""
+		return nil
 	}
 
 	word := parts[0]
-	rest := strings.TrimSpace(str[len(word):])
-	return &rest, word
+	scan.scan.Content = strings.TrimSpace(str[len(word):])
+	(*entry)++
+	return types.NewWord(word, scan.scan, *entry - 1)
 }
 
 var numberRegex = regexp.MustCompile(`^-?(\d+\.?\d*|\.\d+)$`)
 
-func isNumber(str string) bool {
-	return numberRegex.MatchString(str)
+func isNumber(word *types.Word) bool {
+	return numberRegex.MatchString(word.UnwrapName())
 }
 
 var keywords = map[string]bool{
 	"while": true, "until": true, "do": true, "end": true,
 	"if": true, "unless": true, "else": true,
+	"ret": true,
 	"dup": true, "over": true, "swap": true, "2dup": true, "2swap": true, "drop": true, "nop": true,
-	"store": true, "load": true,
+	"store": true, "iload": true, "sload": true,
 	"download": true, "move": true, "copy": true, "exist": true, "touch": true, "mkdir": true, "rm": true, "readfile": true,
 	"unzip": true, "lsf": true, "getf": true, "lsd": true, "getd": true,
 	"concat": true, "tostring": true, "token": true, "absolute": true, "relative": true,
 	"true": true, "false": true,
 	"puts": true,
 	"int": true, "string": true,
+	"proc": true,
 	"exit": true,
 }
 
-func isKeyword(str string) bool {
-	return keywords[str]
+func isKeyword(word *types.Word) bool {
+	return keywords[word.UnwrapName()]
 }
 
-func isString(str string) bool {
-	return len(str) >= 2 && str[0] == '"' && str[len(str)-1] == '"'
+func isIdentifier(word *types.Word) (bool, error) {
+	return validateNormalName(word)
 }
 
-func isPath(str string) bool {
-	return strings.HasPrefix(str, "./") || strings.HasPrefix(str, "/") || strings.HasPrefix(str, ":")
+func isString(word *types.Word) bool {
+	name := word.UnwrapName()
+	return len(name) >= 2 && name[0] == '"' && name[len(name)-1] == '"'
+}
+
+func isPath(word *types.Word) bool {
+	return strings.HasPrefix(word.UnwrapName(), "./") || strings.HasPrefix(word.UnwrapName(), "/") || strings.HasPrefix(word.UnwrapName(), ":")
 }
 
 var symbols = map[string]bool{
@@ -205,25 +382,34 @@ var symbols = map[string]bool{
 	"&": true, "|": true, "^": true, "~": true,
 	"&&": true, "||": true,
 	"=": true, "!=": true, "<": true, "<=": true, ">": true, ">=": true, "!": true,
-	".": true,
+	".": true, ",": true,
 }
 
-func isSymbol(str string) bool {
-	return symbols[str]
+func isSymbol(word *types.Word) bool {
+	return symbols[word.UnwrapName()]
 }
 
-func getTokenType(str string) types.TokenType {
-	if isNumber(str) {
-		return types.TokenTypeNumber
-	} else if isKeyword(str) {
-		return types.TokenTypeKeyword
-	} else if isSymbol(str) {
-		return types.TokenTypeSymbol
-	} else if isPath(str) {
-		return types.TokenTypePath
-	} else if isString(str) {
-		return types.TokenTypeString
+func getTokenType(word *types.Word) (types.TokenType, error) {
+	if isNumber(word) {
+		return types.TokenTypeNumber, nil
+	} else if isKeyword(word) {
+		return types.TokenTypeKeyword, nil
+	}
+
+	identifier, err := isIdentifier(word)
+	if err != nil {
+		return types.TokenTypeNone, fmt.Errorf("failed to get token type: %w", err)
+	}
+
+	if identifier {
+		return types.TokenTypeIdentifier, nil
+	} else if isSymbol(word) {
+		return types.TokenTypeSymbol, nil
+	} else if isPath(word) {
+		return types.TokenTypePath, nil
+	} else if isString(word) {
+		return types.TokenTypeString, nil
 	} else {
-		return types.TokenTypeNone
+		return types.TokenTypeNone, nil
 	}
 }

@@ -1,0 +1,7 @@
+macro test_puts
+    tostring ": " + puts tostring putln
+end
+
+macro test_puts2
+    "test_puts2: " puts tostring putln
+end

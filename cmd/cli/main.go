@@ -23,7 +23,12 @@ func main() {
 	src, exit := source.Load(args)
 	defer exit()
 
+	if src == nil {
+		fmt.Printf("No source\n")
+		return
+	}
+
 	err = app.EntryPoint(src, args)
-	util.ExitWithError(err, util.AsRef("Runtime failure"))
+	util.ExitWithError(err, nil)
 }
 

@@ -6,7 +6,11 @@ import (
 )
 
 func ToolGetd(idx int, dir string) (string, error) {
-	path, err := fixPath(dir)
+	if err := unavailable("getd"); err != nil {
+		return "", err
+	}
+
+	path, err := fixPath(dir, AllowRoot)
 	if err != nil {
 		return "", fmt.Errorf("failed to get sub-dir name in %s: %w", dir, err)
 	}

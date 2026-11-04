@@ -18,3 +18,7 @@ func IsVerbose() bool {
 func IsVerboseRuntime() bool {
 	return util.HasBitFlag(argFlags, types.WetFlagVerboseRuntime)
 }
+
+func IsVerboseTypeCheck() bool {
+	return util.HasBitFlag(argFlags, types.WetFlagVerboseTypeCheck)
+}

@@ -17,6 +17,22 @@ func (s *Stack[T]) Pop() (T, bool) {
 	return val, true
 }
 
+func (s *Stack[T]) Seek(i uint) (T, bool) {
+	if len(*s) == 0 {
+		var zero T
+		return zero, false
+	}
+
+	if uint(len(*s)) <= i {
+		var zero T
+		return zero, false
+	}
+
+	idx := len(*s) - 1 - int(i)
+	val := (*s)[idx]
+	return val, true
+}
+
 func (s *Stack[T]) Peek() (T, bool) {
 	if len(*s) == 0 {
 		var zero T
@@ -25,10 +41,26 @@ func (s *Stack[T]) Peek() (T, bool) {
 	return (*s)[len(*s)-1], true
 }
 
+func (s *Stack[T]) PeekRef() (*T, bool) {
+	if len(*s) == 0 {
+		return nil, false
+	}
+	return &(*s)[len(*s)-1], true
+}
+
 func (s *Stack[T]) Len() int {
 	return len(*s)
 }
 
 func (s *Stack[T]) IsEmpty() bool {
 	return len(*s) == 0
+}
+
+func (s *Stack[T]) Clone() Stack[T] {
+	result := make([]T, len(*s))
+	for idx := range s.Len() {
+		result[idx] = (*s)[idx]
+	}
+
+	return result
 }

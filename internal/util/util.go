@@ -17,7 +17,8 @@ func ExitWithError(err error, message *string) {
 		if message != nil {
 			fmt.Printf("%s\n", *message)
 		}
-		fmt.Printf("Failure: %v\n", err)
+		// the err type itself should provide its newline.
+		fmt.Printf("%v", err)
 		os.Exit(1)
 	}
 }
@@ -43,6 +44,8 @@ func GetCommandArguments() (*types.WetArgs, error) {
 				args.Flags |= types.WetFlagVerboseRuntime
 			case "--verbose-tokenize":
 				args.Flags |= types.WetFlagVerboseTokenize
+			case "--verbose-type-check":
+				args.Flags |= types.WetFlagVerboseTypeCheck
 			case "--verbose":
 				args.Flags |= types.WetFlagVerbose
 			case "--dev":

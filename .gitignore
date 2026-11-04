@@ -1,8 +1,14 @@
 # Build
 /wet
+/wet.exe
+/test
+/test.exe
 
 # Wet
 /.wet/
 
 # Generated
 /internal/stdlib/std/
+
+# Test Generated
+/tests/zip/file.zip

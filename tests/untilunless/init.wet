@@ -1,0 +1,117 @@
+# Evaluated during successful test case
+proc ok do
+    "ok\n" puts
+end
+
+# Evaluated during failed test case
+proc fail do
+    "fails" iload
+    1 +
+    "fails" store
+
+    "fail\n" puts
+end
+
+# Evaluates and prints the final verdict
+proc verdict do
+    "fails" iload
+
+    dup 0 = if
+        "\nverdict: ok\n" puts drop
+    else
+        "\nverdict: fail (failed " swap + " times)\n" + puts
+    end
+end
+
+# Prints a test section to the screen
+proc test in string do
+    "testing " swap + "\n" + puts
+end
+
+# Test start
+0 "fails" store
+
+"testing if\n" puts
+
+"true if" test
+
+1 if
+    ok
+end
+
+"false if" test
+
+0 if
+    fail
+end
+
+"true if else" test
+1 if
+    ok
+else
+    fail
+end
+
+"false if else" test
+0 if
+    fail
+else
+    ok
+end
+
+"testing while\n"
+0 5 while dup 0 > do
+    swap over + swap
+    1 -
+end
+drop
+
+"while sum(1,5)" test
+
+15 = if
+    ok
+else
+    fail
+end
+
+"testing unless\n" puts
+
+"false unless" test
+0 unless
+    ok
+end
+
+"true unless" test
+1 unless
+    fail
+end
+
+"false unless else" test
+0 unless
+    ok
+else
+    fail
+end
+
+"true unless else" test
+1 unless
+    fail
+else
+    ok
+end
+
+"testing until\n" puts
+"until sum(1,5)" test
+0 5 until dup 0 = do
+    swap over + swap
+    1 -
+end
+drop
+
+15 = if
+    ok
+else
+    fail
+end
+
+verdict

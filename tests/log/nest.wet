@@ -1,0 +1,3 @@
+proc foobar int int in int int do
+    2dup drop drop
+end

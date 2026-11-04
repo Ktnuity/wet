@@ -1,5 +1,13 @@
 # wet [<img src="https://img.shields.io/github/license/ktnuity/wet">](https://github.com/Ktnuity/wet/blob/master/LICENSE)
+
+<p align="center">
+    <img src="https://github.com/Ktnuity/wet/blob/dev/docs/img/icon.png?raw=true" alt="wet" />
+</p>
+
 **wet** is a stack-based scripting language used to set-up projects or codebases immediately after a vcs clone.
+
+> [!NOTE]
+> **wet** now has a website. Visit [wet-lang.org](https://wet-lang.org/) for more information. On the website you can try the language in your browser using the [playground](https://wet-lang.org/playground/).
 
 It's:
 - At some points a pre-build.
@@ -27,6 +35,10 @@ This project is WIP so what follows below is mostly a plan for what will become.
 ## Output
 - Strings: `puts`
 - Numbers: `.`
+
+## Inputs
+- Numbers: `,`
+  - Reads 1 integer from stdin.
 
 ## Conditionals & Branching
 The following branches and conditionals would exist:
@@ -82,11 +94,101 @@ Resource Locations would use `\ ` to excape a space, and `\\` to escape a backsl
 ## Memory
 - `<value> "<name>" store`: store `<value>` as `@<name>`.
   - consumes `<value>` and `"<name>"`.
-- `"<name>" load`: load from `@<name>`.
+- `"<name>" iload`: load int from `@<name>`.
   - consumes `"<name>"`
   - pushes `<value> true` if successful and type matches, `false` otherwise.
-- `"<name>"` is local-scope by default.
-  - prefix `<name>` with `.` (`".<name>"`) for global scope.
+- `"<name>" sload`: load string from `@<name>`.
+  - consumes `"<name>"`
+  - pushes `<value> true` if successful and type matches, `false` otherwise.
+- **NOTE:** Memory is global-scoped. Usage of variables will persiset across the scope even after it exists.
+
+**Planned (NOT IMPLEMENTED):**
+- *`"<name>"` is local-scope by default.*
+  - *prefix `<name>` with `.` (`".<name>"`) for global scope.*
+
+## Macros
+Macros are snippets of code which may be replicated multiple times across the program.<br>
+You define a macro by writing `macro <name>`, and you end it as usual by using `end`.
+
+Example:
+```
+macro my_print
+    dup tostring "\n" + puts
+end
+
+34 my_print
+35 my_print
++ my_print
+drop
+```
+
+`my_print` here is a macro which prints any stack value onto the screen without consuming it.<br>
+When this code is executed, the pre-processor removes all macros and turn it into:
+```
+34 dup tostring "\n" + puts
+35 dup tostring "\n" + puts
++ dup tostring "\n" + puts
+drop
+```
+
+As you can see, macros don't exist at runtime. Because of this, you cannot use macros for recursion.
+
+## Procedures
+Procedures are just like macros, but they persist at runtime, and are called whenever a name is encountered.
+You define a procedure by writing `proc <name> [<out types>] [in <in types>] do`, and you end it with `end`.
+
+Example:
+```
+proc my_print in int do
+    dup tostring "\n" + puts
+end
+
+34 my_print
+35 my_print
++ my_print
+drop
+```
+
+Unlike with macros, this code looks the same at runtime.
+
+Let's step through parts of the code together.
+1. Instruction is `proc`. `proc` marks a procedure, so we skip to just after `end`.
+2. Instruction is `34`. 34 is pushed to stack.
+3. Instruction is `my_print`. IP after `my_print` (IP of `35`) is pushed to call stack. IP is changed to inside `my_print` body.
+4. Instruction is `dup`. Pops `34` from stack and push it back twice.
+5. Instruction is `tostring`. Pops `34` from stack. Turns it from `int` to `string`. Push `"34"` to stack.
+6. Instruction is `"\n"`. Push `"\n"` to stack.
+7. Instruction is `+`. Pop `"34"` and `"\n"` from stack, concatenate them, and push back `"34\n"`.
+8. Instruction is `puts`. Pop `"34\n"` from stack, consume it, and print it.
+9. Instruction is `end`. `end` has an `EndMode` which now is set to `EndModeProc`. Pops top value from call stack and change IP to it.
+10. Instruction is `35`. 35 is pushed to stack.
+
+You get the idea at this point.
+
+Procedures have the benefit that because they exist in the code at runtime, they support recursion. Check [`tests/proc/init.wet`](./tests/proc/init.wet) for an implementation of Fibonacci procedure in wet.
+
+**Note:** Prefer using procedures when the body is fairly large, and macros when the body is fairly small.
+
+### Returning
+
+Returning from a proc early can be done using the `ret` keyword. Doing so is fully type-checked, and expects there to be no remaining code in the current scope.
+
+Example:
+```
+proc fib int in int do
+    dup 1 <= if
+        # Note how this acts as a guard.
+        ret
+        # Any code written here will be marked unreachable, resulting in an error in type-checker.
+    end
+
+    dup -- fib
+    swap 2 - fib
+    +
+end
+
+10 fib .
+```
 
 </details>
 
@@ -107,7 +209,7 @@ When a task downloads to a file, it would need an absolute file in relation to y
   - `<src>` expects any resource location.
   - loads the file into memory.
     - `<src>` is consumed.
-    - pushes `<data> true` if successful, `false` if unsuccessful.
+    - pushes `<data> true` if successful, `"" false` if unsuccessful.
       - `<data>` is a string containing file content.
       - fails if file is binary.
 - `<src> <dst> move`
@@ -119,7 +221,7 @@ When a task downloads to a file, it would need an absolute file in relation to y
   - `<src>` and `<dst>` both expects any resource location.
   - copies `<src>` to `<dst>`
     - both `<src>` and `<dst>` is consumed.
-    - pushes `true` if successful, `true false` if `<dst>` already exist, `false false` if unsuccessful.
+    - pushes `true` if successful, `false` if `<dst>` already exist or if copy was unsuccessful.
 - `<res> exist`
   - `<res>` expects any resource location.
   - checks the existance of a `<res>` file.
@@ -144,7 +246,7 @@ When a task downloads to a file, it would need an absolute file in relation to y
   - `<res>` and `<dst>` expects any resource location.
   - unzips `<res>` into `<dst>` directory.
     - both `<res>` and `<dst>` is consumed.
-    - pushes `<dir count> <file count>` if successful, `-1` otherwise.
+    - pushes `<dir count> <file count>` if successful, `-1 -1` otherwise.
 - `<dir> lsf`
   - `<dir>` expects any resource location directory.
   - lists file count in `<dir>`.
@@ -239,6 +341,23 @@ When a task downloads to a file, it would need an absolute file in relation to y
 
 </details>
 
+<details>
+    <summary><code>Type Checker</code>: Information about static type checking</summary>
+
+**wet** uses static type checking in order to ensure programs execute more predictably. Type checking runs once before execution. Any errors during type checking will be reported if found and halts execution.
+
+### Things worth knowing about
+- Scopes stacks must persist.
+    - While loops cannot cause the stack to grow or shrink.
+    - If blocks with matching else must have both paths generate matching stack once `end` is reached.
+    - `ret` acts as if `end` for the closest up-scope `proc` was reached. Upon reaching it, anything between it and the next `end` is unreachable code and will throw a type-checker error.
+- Memory usage is difficult to type-check as it changes during runtime. We could introduce greedy type checking by cross-referencing every usage of a memory name. But this leads to slower execution in larger projects. For now, `"" false` is returned when `sload` exists but has incorrect type, and `0 false` is returned when `iload` exists but has incorrect type.
+- `--verbose-type-check` can be used to debug your script if a type-checking error is confusing. Logs the type stack and gives you a good idea of what's happening after each instruction.
+
+
+</details>
+
+
 # Contributing?
 Contributing is not needed, this section is mostly to document the development cycle I follow. But if you do want to contribute, this applies to you as well.
 
@@ -272,4 +391,4 @@ Inspired by these projects:
 - My extensive use of bash files for development: [ktnlibc/build.sh](https://github.com/Kirdow/ktnlibc/blob/master/build.sh), [cstack/build.sh](https://github.com/Kirdow/cstack/blob/master/build.sh), [pDB/build.sh](https://github.com/Kirdow/pDB/blob/master/run.sh).
 
 # License
-`wet` is released under the [MIT License](https://github.com/Ktnuity/wet/blob/master/LICENSE).
+`wet` is released and the source is made available under the [MIT License](https://github.com/Ktnuity/wet/blob/master/LICENSE).

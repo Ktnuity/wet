@@ -6,12 +6,16 @@ import (
 )
 
 func ToolRemoveFile(res string) error {
-	path, err := fixPath(res)
+	if err := unavailable("rm"); err != nil {
+		return err
+	}
+
+	path, err := fixPath(res, RejectRoot)
 	if err != nil {
 		return fmt.Errorf("failed to remove file %s: %w", res, err)
 	}
 
-	err = os.Remove(path)
+	err = os.RemoveAll(path)
 	if err != nil {
 		return fmt.Errorf("failed to remove file %s: %w", res, err)
 	}

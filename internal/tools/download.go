@@ -1,3 +1,5 @@
+//go:build !js
+
 package tools
 
 import (
@@ -8,7 +10,7 @@ import (
 )
 
 func ToolDownload(url, dst string) error {
-	path, err := fixPath(dst)
+	path, err := fixPath(dst, AllowRoot)
 	if err != nil {
 		return fmt.Errorf("failed to download from %s: %w", url, err)
 	}

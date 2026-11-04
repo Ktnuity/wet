@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -11,14 +13,32 @@ const (
 	TokenTypeNone TokenType = iota
 	TokenTypeNumber
 	TokenTypeKeyword
+	TokenTypeIdentifier
 	TokenTypePath
 	TokenTypeSymbol
 	TokenTypeString
 )
 
+type TokenExtraProc struct {
+	Name		*Word
+	In			[]ValueType
+	Out			[]ValueType
+}
+
+type TokenExtra struct {
+	Proc		*TokenExtraProc
+}
+
+type Word struct {
+	word		string
+	line		*SourceLine
+	entry		int
+}
+
 type Token struct {
-	Value		string
+	Word		*Word
 	Type		TokenType
+	Extra		TokenExtra
 }
 
 func GetTokenTypeName(tokenType TokenType) string {
@@ -26,6 +46,7 @@ func GetTokenTypeName(tokenType TokenType) string {
 	case TokenTypeNone: return "None"
 	case TokenTypeNumber: return "Number"
 	case TokenTypeKeyword: return "Keyword"
+	case TokenTypeIdentifier: return "Identifier"
 	case TokenTypePath: return "Path"
 	case TokenTypeSymbol: return "Symbol"
 	case TokenTypeString: return "String"
@@ -51,6 +72,19 @@ func EscapePath(path string) string {
 	return sb.String()
 }
 
+var floatRegex = regexp.MustCompile(`^-?(\d+\.\d+|\.\d+)$`)
+var intRegex = regexp.MustCompile(`^-?(\d+)$`)
+func (word *Word) IsFloat() bool {
+	return floatRegex.MatchString(word.UnwrapName())
+}
+
+func (word *Word) IsInt() bool {
+	return intRegex.MatchString(word.UnwrapName())
+}
+
+func (word *Word) IsNumber() bool {
+	return word.IsFloat() || word.IsInt()
+}
 
 func (token *Token) Format() string {
 	if token == nil {
@@ -60,14 +94,14 @@ func (token *Token) Format() string {
 	typeName := GetTokenTypeName(token.Type)
 
 	switch token.Type {
-	case TokenTypeNumber, TokenTypeKeyword, TokenTypeSymbol:
-		return fmt.Sprintf("%s(%s)", typeName, token.Value)
+	case TokenTypeNumber, TokenTypeKeyword, TokenTypeSymbol, TokenTypeIdentifier:
+		return fmt.Sprintf("%s(%s)", typeName, token.Word.UnwrapName())
 	case TokenTypePath:
-		return EscapePath(token.Value)
+		return EscapePath(token.Word.UnwrapName())
 	case TokenTypeNone:
-		return fmt.Sprintf("%s[[%s]]", typeName, token.Value)
+		return fmt.Sprintf("%s[[%s]]", typeName, token.Word.UnwrapName())
 	default:
-		return fmt.Sprintf("%s", token.Value)
+		return fmt.Sprintf("%s", token.Word.UnwrapName())
 	}
 }
 
@@ -77,7 +111,7 @@ func (t *Token) Equals(value string, ttype TokenType) bool {
 	}
 
 	if t.Type == TokenTypeNone {
-		return value == "" && ttype == TokenTypeNone 
+		return value == "" && ttype == TokenTypeNone
 	}
 
 	if ttype == TokenTypeNone {
@@ -91,12 +125,12 @@ func (t *Token) Equals(value string, ttype TokenType) bool {
 			return false
 		}
 
-		if t.Value == "" {
+		if t.Word.Empty() {
 			return false
 		}
 	}
 
-	return t.Value == value
+	return t.Word.Equals(value)
 }
 
 func (t *Token) GetNumberValue() (int, bool) {
@@ -108,11 +142,11 @@ func (t *Token) GetNumberValue() (int, bool) {
 		return 0, false
 	}
 
-	if t.Value == "" {
+	if t.Word.Empty() {
 		return 0, false
 	}
 
-	i, err := strconv.ParseInt(t.Value, 10, 64)
+	i, err := strconv.ParseInt(t.Word.UnwrapName(), 10, 64)
 	if err == nil {
 		return int(i), true
 	}
@@ -129,36 +163,36 @@ func (t *Token) GetStringValue() (string, bool) {
 		return "", false
 	}
 
-	if t.Value == "" {
+	if t.Word.Empty() {
 		return "", false
 	}
 
-	return UnescapeString(t.Value), true
+	return UnescapeString(t.Word), true
 }
 
 func (t *Token) GetPathValue() (string, bool) {
 	if t == nil {
 		return "", false
 	}
-	
+
 	if !t.Equals("", TokenTypePath) {
 		return "", false
 	}
 
-	if t.Value == "" {
+	if t.Word.Empty() {
 		return "", false
 	}
 
-	return UnescapeString(t.Value), true
+	return UnescapeString(t.Word), true
 }
 
-func UnescapeString(str string) string {
-	if len(str) < 2 || str[0] != '"' || str[len(str)-1] != '"' {
-		return str
+func UnescapeString(word *Word) string {
+	if len(word.word) < 2 || word.word[0] != '"' || word.word[len(word.word)-1] != '"' {
+		return word.word
 	}
 
 	// Remove quotes
-	content := str[1 : len(str)-1]
+	content := word.word[1 : len(word.word)-1]
 
 	var result strings.Builder
 	result.Grow(len(content))
@@ -191,4 +225,55 @@ func UnescapeString(str string) string {
 	}
 
 	return result.String()
+}
+
+func NewWord(word string, line *SourceLine, entry int) *Word {
+	return &Word{word, line, entry}
+}
+
+func (w *Word) Any(names...string) bool {
+	return slices.Contains(names, w.word)
+}
+
+func (w *Word) Equals(name string) bool {
+	return w.word == name
+}
+
+func (w *Word) Empty() bool {
+	return w.word == ""
+}
+
+func (w *Word) UnwrapName() string {
+	return w.word
+}
+
+func (w *Word) LineNumber() int {
+	return w.line.Line
+}
+
+func (w *Word) LineFile() string {
+	return w.line.Parent.Name
+}
+
+func (w *Word) UnwrapLine() *SourceLine {
+	return w.line
+}
+
+func (w *Word) InlineTrace() string {
+	result := make([]string, 0, 8)
+
+	result = append(result, fmt.Sprintf("at %s:%d", w.LineFile(), w.LineNumber()))
+
+	snippet := w.line.Parent.Parent
+
+	for snippet != nil {
+		result = append(result, fmt.Sprintf("in %s", snippet.Snippet.Name))
+		snippet = snippet.Snippet.Parent
+	}
+
+	return strings.Join(result, " ")
+}
+
+func (w *Word) EntryNumber() int {
+	return w.entry
 }
