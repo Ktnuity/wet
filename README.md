@@ -158,7 +158,7 @@ Let's step through parts of the code together.
 
 You get the idea at this point.
 
-Procedures have the benefit that because they exist in the code at runtime, they support recursion. Check [`demo/proc/init.wet`](./demo/proc/init.wet) for an implementation of Fibonacci procedure in wet.
+Procedures have the benefit that because they exist in the code at runtime, they support recursion. Check [`tests/proc/init.wet`](./tests/proc/init.wet) for an implementation of Fibonacci procedure in wet.
 
 **Note:** Prefer using procedures when the body is fairly large, and macros when the body is fairly small.
 
