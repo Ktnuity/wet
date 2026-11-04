@@ -87,11 +87,17 @@ Resource Locations would use `\ ` to excape a space, and `\\` to escape a backsl
 ## Memory
 - `<value> "<name>" store`: store `<value>` as `@<name>`.
   - consumes `<value>` and `"<name>"`.
-- `"<name>" load`: load from `@<name>`.
+- `"<name>" iload`: load int from `@<name>`.
   - consumes `"<name>"`
   - pushes `<value> true` if successful and type matches, `false` otherwise.
-- `"<name>"` is local-scope by default.
-  - prefix `<name>` with `.` (`".<name>"`) for global scope.
+- `"<name>" sload`: load string from `@<name>`.
+  - consumes `"<name>"`
+  - pushes `<value> true` if successful and type matches, `false` otherwise.
+- **NOTE:** Memory is global-scoped. Usage of variables will persiset across the scope even after it exists.
+
+**Planned (NOT IMPLEMENTED):**
+- *`"<name>"` is local-scope by default.*
+  - *prefix `<name>` with `.` (`".<name>"`) for global scope.*
 
 ## Macros
 Macros are snippets of code which may be replicated multiple times across the program.<br>
