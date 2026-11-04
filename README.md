@@ -164,8 +164,24 @@ Procedures have the benefit that because they exist in the code at runtime, they
 
 ### Returning
 
-Returning uses 3 keywords.
-- `ret` immeditately returns from the procedure.
+Returning from a proc early can be done using the `ret` keyword. Doing so is fully type-checked, and expects there to be no remaining code in the current scope.
+
+Example:
+```
+proc fib int in int do
+    dup 1 <= if
+        # Note how this acts as a guard.
+        ret
+        # Any code written here will be marked unreachable, resulting in an error in type-checker.
+    end
+
+    dup -- fib
+    swap 2 - fib
+    +
+end
+
+10 fib .
+```
 
 </details>
 
